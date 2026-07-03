@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "quality-gate-ai",
   "publisher": "HichamElMalki",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "QualityGate AI",
   "description": "KI-gestützte Anforderungsqualitätsprüfung für Azure-Boards-Work-Items: Analyse, Fix-Vorschläge und Duplikaterkennung direkt im Work-Item-Formular.",
   "public": false,
