@@ -18,12 +18,12 @@ Extraktion, siehe unten).
 
 | Schritt | Status |
 | --- | --- |
-| 1. Backend-Host (Azure Functions) | 🟡 begonnen — Functions-v4-Projektgerüst + schmaler Vertikalschnitt (`/api/health`, `/api/work-items/{id}`) lokal verifiziert. Restliche ~28 Endpunkte fehlen noch. |
+| 1. Backend-Host (Azure Functions) | 🟢 Functions-v4-Projektgerüst + alle Resolver-Äquivalente aus dem alten Forge-Resolver als HTTP-Endpunkte (`src/functions/*.js`, Schritt 6) lokal verifiziert (Unit-Tests). |
 | 2. Repository-Schicht (Azure Table Storage) + Key Vault | 🟡 begonnen — alle 7 Repositories laufen über `src/repositories/table-kv-store.js` (Azure Table Storage), Round-Trip gegen die echte Tabelle `qualityGateKeyValueStore` verifiziert. Key Vault für Secrets (statt Table/Env) noch offen. |
-| 3. Auth (SDK-Token-Validierung, Admin-Gate) | 🟡 begonnen — `src/auth/{auth-context,sdk-token,require-auth,require-admin}.js`: Token-Passthrough (`Authorization: Bearer`) über einen request-scoped Auth-Kontext, Gateway nutzt Bearer-Token statt PAT sobald vorhanden (PAT bleibt lokaler Fallback), Admin-Gate über die ADO-Permissions-API (fail-closed). Noch offen: Anbindung an die Endpunkte (Schritt 6) und Verifizierung der Security-Namespace-/Bitmask-Werte gegen die Ziel-Organisation. |
+| 3. Auth (SDK-Token-Validierung, Admin-Gate) | ✅ `src/auth/{auth-context,sdk-token,require-auth,require-admin}.js`: Token-Passthrough (`Authorization: Bearer`) über einen request-scoped Auth-Kontext, Gateway nutzt Bearer-Token statt PAT sobald vorhanden (PAT bleibt lokaler Fallback), Admin-Gate über die ADO-Permissions-API (fail-closed). An alle Endpunkte aus Schritt 6 angebunden. Offen: Verifizierung der Security-Namespace-/Bitmask-Werte gegen die Ziel-Organisation. |
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
 | 5. ADF → HTML, Akzeptanzkriterien natives Feld | ✅ `issue-service.js` (lesen), `azure-devops-apply-service-core.js` (schreiben) |
-| 6. Resolver → HTTP-Endpunkte | ⬜ offen |
+| 6. Resolver → HTTP-Endpunkte | ✅ Alle 27 Forge-Resolver aus `jiraPlugin/src/index.js` als `app.http`-Endpunkte in `src/functions/{work-items,analysis,fix-suggestions,rulesets,api-key,user-state,llm}.js` nachgebaut, hinter `withAuth`/`assertAdmin` (Schritt 3). Ausnahme: `fetchLabels` entfällt bewusst — Labels stecken über `System.Tags` bereits in `getNormalizedIssue`. |
 | 7. `vss-extension.json` + Frontend | ⬜ offen — Frontend ist bewusst nicht Teil dieses Repos (Stand: Extraktion) |
 
 **Wichtig:** Mit Schritt 2 laufen jetzt auch Endpunkte, die die Repository-Schicht berühren
@@ -46,8 +46,14 @@ npm test
 cp local.settings.json.example local.settings.json   # echte ADO-Werte eintragen
 npm start                                             # ruft `func start` auf
 curl http://localhost:7071/api/health
-curl http://localhost:7071/api/work-items/<id>
+curl -H "Authorization: Bearer <token>" http://localhost:7071/api/work-items/<id>
+curl -X POST -H "Authorization: Bearer <token>" http://localhost:7071/api/work-items/<id>/analyze
 ```
+
+Alle Endpunkte außer `/api/health` erfordern den `Authorization: Bearer <token>`-Header (Schritt 3).
+Lokal kann ein PAT als Bearer-Wert eingesetzt werden; in der Extension liefert
+`SDK.getAccessToken()` das echte Token (Schritt 7). Die vollständige Endpunkt-Liste steht in
+`src/functions/{work-items,analysis,fix-suggestions,rulesets,api-key,user-state,llm}.js`.
 
 Deploy auf die bestehende Function App (`qualitygate-ai-api`, Resource Group
 `qualitygate-ai-rg`):
@@ -104,7 +110,8 @@ src/
   services/           # Orchestrierung (Analyse, Fix-Vorschläge, Apply-Flow, ...)
   gateways/azure-devops/  # WIT-REST-API-Zugriff (Read/PATCH/WIQL)
   repositories/       # Azure-Table-Storage-KV-Store + 7 Repository-Wrapper
-  functions/          # Azure-Functions-v4-HTTP-Endpunkte (Schritt 1, im Aufbau)
+  auth/               # Auth-Kontext, Token-Validierung, withAuth/assertAdmin (Schritt 3)
+  functions/          # Azure-Functions-v4-HTTP-Endpunkte, nach Domäne gruppiert (Schritt 6)
   utils/
 tests/
 ```

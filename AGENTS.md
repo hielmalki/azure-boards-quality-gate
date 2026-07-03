@@ -29,14 +29,18 @@ den Backend-Code, der für die Azure-Migration relevant ist:
   PAT bleibt lokaler Fallback.
 - `src/auth/*` — Request-scoped Auth-Kontext (`auth-context.js`), Token-Extraktion/-Validierung
   (`sdk-token.js`), `withAuth`-Wrapper für Function-Handler (`require-auth.js`) und das
-  fail-closed Admin-Gate über ADO-Permissions (`require-admin.js`). Schritt 3, noch nicht an die
-  Endpunkte in `src/functions/*` angebunden (folgt in Schritt 6).
+  fail-closed Admin-Gate über ADO-Permissions (`require-admin.js`). Schritt 3, an alle Endpunkte
+  in `src/functions/*` angebunden (Schritt 6).
 - `src/repositories/*` — migriert auf Azure Table Storage (`table-kv-store.js`), Round-Trip gegen
   die echte Tabelle `qualityGateKeyValueStore` verifiziert. Offen: der OpenAI-Key liegt noch als
   Klartext in der Tabelle statt in Key Vault (Härtung, Teil von Schritt 2).
-- `src/functions/*` — Azure-Functions-v4-HTTP-Endpunkte. Bisher nur ein schmaler Vertikalschnitt
-  (`health`, `getWorkItem`); die übrigen ~28 Resolver-Äquivalente aus dem alten Forge-Resolver
-  fehlen noch (Schritt 6).
+- `src/functions/*` — Azure-Functions-v4-HTTP-Endpunkte, nach Domäne gruppiert
+  (`work-items`, `analysis`, `fix-suggestions`, `rulesets`, `api-key`, `user-state`, `llm`).
+  Alle 27 Resolver-Äquivalente aus dem alten Forge-Resolver (`jiraPlugin/src/index.js`) sind
+  nachgebaut (Schritt 6), jeweils hinter `withAuth`; Config-Mutationen zusätzlich hinter
+  `assertAdmin`. Ausnahme: `fetchLabels` entfällt bewusst (Labels stecken bereits über
+  `System.Tags` in `getNormalizedIssue`). Jeder Handler ist über `__testUtils` testbar
+  (siehe `tests/*-functions.test.js`).
 
 **Nicht** Teil dieses Repos (bewusst, Stand der Extraktion):
 - Forge-Resolver (`src/index.js` im jiraPlugin-Repo), `manifest.yml`, Forge-Deploy-Skripte —
