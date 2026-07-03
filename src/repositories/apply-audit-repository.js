@@ -1,10 +1,10 @@
-import { kvs } from '@forge/kvs';
+import { setValue } from './table-kv-store.js';
 import { getApplyAuditKey } from './storage-keys.js';
 
-export async function storeApplyAuditRecord(issueKey, auditId, auditRecord) {
+export async function storeApplyAuditRecord(issueKey, auditId, auditRecord, deps = {}) {
   if (!issueKey || !auditId) {
     return;
   }
 
-  await kvs.set(getApplyAuditKey(issueKey, auditId), auditRecord);
+  await setValue(getApplyAuditKey(issueKey, auditId), auditRecord, deps);
 }

@@ -19,17 +19,19 @@ Extraktion, siehe unten).
 | Schritt | Status |
 | --- | --- |
 | 1. Backend-Host (Azure Functions) | 🟡 begonnen — Functions-v4-Projektgerüst + schmaler Vertikalschnitt (`/api/health`, `/api/work-items/{id}`) lokal verifiziert. Restliche ~28 Endpunkte fehlen noch. |
-| 2. Repository-Schicht (Azure Table Storage/Cosmos) + Key Vault | ⬜ offen — `src/repositories/*` nutzt noch `@forge/kvs` |
+| 2. Repository-Schicht (Azure Table Storage) + Key Vault | 🟡 begonnen — alle 7 Repositories laufen über `src/repositories/table-kv-store.js` (Azure Table Storage), Round-Trip gegen die echte Tabelle `qualityGateKeyValueStore` verifiziert. Key Vault für Secrets (statt Table/Env) noch offen. |
 | 3. Auth (SDK-Token-Validierung, Admin-Gate) | ⬜ offen |
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
 | 5. ADF → HTML, Akzeptanzkriterien natives Feld | ✅ `issue-service.js` (lesen), `azure-devops-apply-service-core.js` (schreiben) |
 | 6. Resolver → HTTP-Endpunkte | ⬜ offen |
 | 7. `vss-extension.json` + Frontend | ⬜ offen — Frontend ist bewusst nicht Teil dieses Repos (Stand: Extraktion) |
 
-**Wichtig:** Nur Endpunkte, die **nicht** über die Repository-Schicht laufen, sind aktuell
-end-to-end lauffähig (z. B. `getWorkItem`) — alles, was `src/repositories/*` berührt (u. a.
-`analyzeIssue` über `ruleset-service.js`), schlägt zur Laufzeit fehl, weil `@forge/kvs` außerhalb
-von Forge nicht funktioniert. Das ist der bekannte, offene Schritt 2.
+**Wichtig:** Mit Schritt 2 laufen jetzt auch Endpunkte, die die Repository-Schicht berühren
+(z. B. `analyzeIssue` über `ruleset-service.js`), außerhalb von Forge lauffähig — vorausgesetzt
+`AZURE_STORAGE_CONNECTION_STRING`/`AzureWebJobsStorage` zeigt auf einen Storage Account mit der
+Tabelle `qualityGateKeyValueStore` (siehe unten). `app-config-repository.js` (OpenAI-Key) liegt
+noch als Klartext in der Tabelle statt in Key Vault – das ist die verbleibende Härtung aus
+Schritt 2.
 
 ## Setup
 
@@ -72,6 +74,19 @@ später durch SDK-Token-Validierung).
 | `LLM_PROVIDER` | `openai` oder `disabled` |
 | `OPENAI_API_KEY` | OpenAI-API-Key (falls kein Storage-Wert über `app-config-repository.js` gesetzt ist) |
 
+### Umgebungsvariablen (für die Repository-Schicht / Azure Table Storage)
+
+| Variable | Zweck |
+| --- | --- |
+| `AZURE_STORAGE_CONNECTION_STRING` | Verbindungsstring des Storage Accounts. Fällt auf `AzureWebJobsStorage` zurück (in der Function App bereits gesetzt). |
+| `AZURE_TABLE_NAME` | Tabellenname, Default `qualityGateKeyValueStore`. |
+
+Die Tabelle muss einmalig existieren (wurde für `qualitygateaifr` bereits angelegt):
+
+```bash
+az storage table create --name qualityGateKeyValueStore --account-name qualitygateaifr --auth-mode login
+```
+
 ## Struktur
 
 ```
@@ -80,7 +95,8 @@ src/
   providers/llm/      # OpenAI-Anbindung, 1:1 aus dem Jira-Plugin übernommen
   services/           # Orchestrierung (Analyse, Fix-Vorschläge, Apply-Flow, ...)
   gateways/azure-devops/  # WIT-REST-API-Zugriff (Read/PATCH/WIQL)
-  repositories/       # Storage-Zugriff — aktuell noch @forge/kvs, Schritt 2 offen
+  repositories/       # Azure-Table-Storage-KV-Store + 7 Repository-Wrapper
+  functions/          # Azure-Functions-v4-HTTP-Endpunkte (Schritt 1, im Aufbau)
   utils/
 tests/
 ```

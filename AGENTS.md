@@ -24,14 +24,19 @@ den Backend-Code, der für die Azure-Migration relevant ist:
 - `src/domain/*`, `src/providers/llm/*` — 1:1 aus dem Jira-Plugin übernommen (plattformneutral).
 - `src/services/*` — Orchestrierung, bereits auf Azure-DevOps-Feldmodell umgestellt (HTML statt
   ADF, natives Akzeptanzkriterien-Feld).
-- `src/gateways/azure-devops/*` — neues Gateway gegen die WIT-REST-API (ersetzt das frühere
+- `src/gateways/azure-devops/*` — Gateway gegen die WIT-REST-API (ersetzt das frühere
   Jira-Gateway).
-- `src/repositories/*` — **noch nicht migriert**, nutzt weiterhin `@forge/kvs`. Das ist ein
-  bekannter, offener Punkt (Schritt 2 der Architektur-Doku), kein Versehen.
+- `src/repositories/*` — migriert auf Azure Table Storage (`table-kv-store.js`), Round-Trip gegen
+  die echte Tabelle `qualityGateKeyValueStore` verifiziert. Offen: der OpenAI-Key liegt noch als
+  Klartext in der Tabelle statt in Key Vault (Härtung, Teil von Schritt 2).
+- `src/functions/*` — Azure-Functions-v4-HTTP-Endpunkte. Bisher nur ein schmaler Vertikalschnitt
+  (`health`, `getWorkItem`); die übrigen ~28 Resolver-Äquivalente aus dem alten Forge-Resolver
+  fehlen noch (Schritt 6).
 
 **Nicht** Teil dieses Repos (bewusst, Stand der Extraktion):
-- Forge-Resolver (`src/index.js`), `manifest.yml`, Forge-Deploy-Skripte — komplett Forge-spezifisch,
-  wird in Schritt 6/7 durch neue HTTP-Endpunkte und `vss-extension.json` ersetzt.
+- Forge-Resolver (`src/index.js` im jiraPlugin-Repo), `manifest.yml`, Forge-Deploy-Skripte —
+  komplett Forge-spezifisch, wird durch die Endpunkte in `src/functions/*` und
+  `vss-extension.json` (Schritt 7) ersetzt.
 - Frontend (`static/hello-world`) — noch vollständig `@forge/bridge`-basiert, nicht migriert.
 
 Bei jeder Aufgabe zuerst `docs/azure-boards-migration-architektur.md` konsultieren, um zu prüfen,
@@ -172,8 +177,9 @@ Nicht:
 - Branch-Protektionen umgehen
 - Blocker verstecken
 - nicht zusammenhängende Aufgaben ohne Erklärung in einem Commit/Branch mischen
-- Jira/Forge-Abhängigkeiten (`@forge/api`, `@forge/resolver`) wieder einführen — dieses Repo ist
-  bewusst Forge-frei bis auf `@forge/kvs` in `src/repositories/*` (Schritt 2 offen)
+- Jira/Forge-Abhängigkeiten (`@forge/api`, `@forge/resolver`, `@forge/kvs`) wieder einführen —
+  dieses Repo ist vollständig Forge-frei (Schritt 2 hat `@forge/kvs` durch Azure Table Storage
+  ersetzt)
 
 ---
 

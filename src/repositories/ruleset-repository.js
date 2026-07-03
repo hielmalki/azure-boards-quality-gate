@@ -1,18 +1,18 @@
-import { kvs } from '@forge/kvs';
+import { getValue, setValue } from './table-kv-store.js';
 import { ACTIVE_RULESETS_KEY, CUSTOM_RULESETS_KEY } from './storage-keys.js';
 
-export async function getStoredActiveRulesets() {
-  return (await kvs.get(ACTIVE_RULESETS_KEY)) ?? null;
+export async function getStoredActiveRulesets(deps = {}) {
+  return (await getValue(ACTIVE_RULESETS_KEY, deps)) ?? null;
 }
 
-export async function setStoredActiveRulesets(activeRulesetIds) {
-  await kvs.set(ACTIVE_RULESETS_KEY, activeRulesetIds);
+export async function setStoredActiveRulesets(activeRulesetIds, deps = {}) {
+  await setValue(ACTIVE_RULESETS_KEY, activeRulesetIds, deps);
 }
 
-export async function getStoredCustomRulesets() {
-  return (await kvs.get(CUSTOM_RULESETS_KEY)) ?? null;
+export async function getStoredCustomRulesets(deps = {}) {
+  return (await getValue(CUSTOM_RULESETS_KEY, deps)) ?? null;
 }
 
-export async function setStoredCustomRulesets(customRulesets) {
-  await kvs.set(CUSTOM_RULESETS_KEY, customRulesets);
+export async function setStoredCustomRulesets(customRulesets, deps = {}) {
+  await setValue(CUSTOM_RULESETS_KEY, customRulesets, deps);
 }

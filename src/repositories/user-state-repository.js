@@ -1,10 +1,10 @@
-import { kvs } from '@forge/kvs';
+import { getValue, setValue } from './table-kv-store.js';
 import { getUserStateKey } from './storage-keys.js';
 
-export async function getStoredUserState(accountId) {
-  return (await kvs.get(getUserStateKey(accountId))) ?? null;
+export async function getStoredUserState(accountId, deps = {}) {
+  return (await getValue(getUserStateKey(accountId), deps)) ?? null;
 }
 
-export async function setStoredUserState(accountId, userState) {
-  await kvs.set(getUserStateKey(accountId), userState);
+export async function setStoredUserState(accountId, userState, deps = {}) {
+  await setValue(getUserStateKey(accountId), userState, deps);
 }

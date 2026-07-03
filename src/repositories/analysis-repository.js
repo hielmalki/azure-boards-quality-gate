@@ -1,18 +1,18 @@
-import { kvs } from '@forge/kvs';
+import { getValue, setValue } from './table-kv-store.js';
 import { getIssueAnalysisKey } from './storage-keys.js';
 
-export async function getStoredIssueAnalysis(issueKey) {
+export async function getStoredIssueAnalysis(issueKey, deps = {}) {
   if (!issueKey) {
     return null;
   }
 
-  return (await kvs.get(getIssueAnalysisKey(issueKey))) ?? null;
+  return (await getValue(getIssueAnalysisKey(issueKey), deps)) ?? null;
 }
 
-export async function setStoredIssueAnalysis(issueKey, analysisRecord) {
+export async function setStoredIssueAnalysis(issueKey, analysisRecord, deps = {}) {
   if (!issueKey) {
     return;
   }
 
-  await kvs.set(getIssueAnalysisKey(issueKey), analysisRecord);
+  await setValue(getIssueAnalysisKey(issueKey), analysisRecord, deps);
 }
