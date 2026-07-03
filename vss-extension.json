@@ -11,7 +11,7 @@
     { "id": "Microsoft.VisualStudio.Services" }
   ],
   "icons": {
-    "default": "web/public/icon.svg"
+    "default": "web/public/icon.png"
   },
   "files": [
     {
