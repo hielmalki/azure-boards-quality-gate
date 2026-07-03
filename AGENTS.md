@@ -32,8 +32,10 @@ den Backend-Code, der für die Azure-Migration relevant ist:
   fail-closed Admin-Gate über ADO-Permissions (`require-admin.js`). Schritt 3, an alle Endpunkte
   in `src/functions/*` angebunden (Schritt 6).
 - `src/repositories/*` — migriert auf Azure Table Storage (`table-kv-store.js`), Round-Trip gegen
-  die echte Tabelle `qualityGateKeyValueStore` verifiziert. Offen: der OpenAI-Key liegt noch als
-  Klartext in der Tabelle statt in Key Vault (Härtung, Teil von Schritt 2).
+  die echte Tabelle `qualityGateKeyValueStore` verifiziert. Der OpenAI-Key wird über
+  `key-vault-store.js` in Azure Key Vault gehalten, sobald `AZURE_KEY_VAULT_URL` gesetzt ist
+  (`DefaultAzureCredential`); ohne Key Vault bleibt Table Storage lokaler Fallback
+  (`app-config-repository.js`). Schritt 2 damit abgeschlossen.
 - `src/functions/*` — Azure-Functions-v4-HTTP-Endpunkte, nach Domäne gruppiert
   (`work-items`, `analysis`, `fix-suggestions`, `rulesets`, `api-key`, `user-state`, `llm`).
   Alle 27 Resolver-Äquivalente aus dem alten Forge-Resolver (`jiraPlugin/src/index.js`) sind

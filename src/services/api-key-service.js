@@ -1,4 +1,8 @@
-import { getStoredOpenAiApiKey, setStoredOpenAiApiKey } from '../repositories/app-config-repository.js';
+import {
+  getStoredOpenAiApiKey,
+  setStoredOpenAiApiKey,
+  isKeyVaultConfigured,
+} from '../repositories/app-config-repository.js';
 import { getOpenAiBaseUrl } from '../providers/llm/provider-config.js';
 import { logError, logInfo } from '../utils/logger.js';
 
@@ -15,7 +19,11 @@ export async function getApiKeyStatus() {
   const storedKey = await getStoredOpenAiApiKey();
 
   if (storedKey) {
-    return { configured: true, source: 'storage', maskedKey: maskApiKey(storedKey) };
+    return {
+      configured: true,
+      source: isKeyVaultConfigured() ? 'keyvault' : 'storage',
+      maskedKey: maskApiKey(storedKey),
+    };
   }
 
   if (process.env.OPENAI_API_KEY) {

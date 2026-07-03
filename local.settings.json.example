@@ -9,7 +9,10 @@
     "AZURE_DEVOPS_PAT": "dein-personal-access-token",
 
     "LLM_PROVIDER": "disabled",
-    "OPENAI_API_KEY": ""
+    "OPENAI_API_KEY": "",
+
+    "AZURE_KEY_VAULT_URL": "",
+    "OPENAI_SECRET_NAME": "openai-api-key"
   },
   "Host": {
     "CORS": "*"

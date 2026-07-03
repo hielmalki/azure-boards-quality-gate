@@ -19,7 +19,7 @@ Extraktion, siehe unten).
 | Schritt | Status |
 | --- | --- |
 | 1. Backend-Host (Azure Functions) | 🟢 Functions-v4-Projektgerüst + alle Resolver-Äquivalente aus dem alten Forge-Resolver als HTTP-Endpunkte (`src/functions/*.js`, Schritt 6) lokal verifiziert (Unit-Tests). |
-| 2. Repository-Schicht (Azure Table Storage) + Key Vault | 🟡 begonnen — alle 7 Repositories laufen über `src/repositories/table-kv-store.js` (Azure Table Storage), Round-Trip gegen die echte Tabelle `qualityGateKeyValueStore` verifiziert. Key Vault für Secrets (statt Table/Env) noch offen. |
+| 2. Repository-Schicht (Azure Table Storage) + Key Vault | ✅ Alle 7 Repositories laufen über `src/repositories/table-kv-store.js` (Azure Table Storage), Round-Trip gegen die echte Tabelle `qualityGateKeyValueStore` verifiziert. Der OpenAI-Key liegt jetzt in **Azure Key Vault** (`src/repositories/key-vault-store.js`, `DefaultAzureCredential`), sobald `AZURE_KEY_VAULT_URL` gesetzt ist; ohne Key Vault bleibt Table Storage lokaler Fallback. |
 | 3. Auth (SDK-Token-Validierung, Admin-Gate) | ✅ `src/auth/{auth-context,sdk-token,require-auth,require-admin}.js`: Token-Passthrough (`Authorization: Bearer`) über einen request-scoped Auth-Kontext, Gateway nutzt Bearer-Token statt PAT sobald vorhanden (PAT bleibt lokaler Fallback), Admin-Gate über die ADO-Permissions-API (fail-closed). An alle Endpunkte aus Schritt 6 angebunden. Offen: Verifizierung der Security-Namespace-/Bitmask-Werte gegen die Ziel-Organisation. |
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
 | 5. ADF → HTML, Akzeptanzkriterien natives Feld | ✅ `issue-service.js` (lesen), `azure-devops-apply-service-core.js` (schreiben) |
@@ -29,9 +29,9 @@ Extraktion, siehe unten).
 **Wichtig:** Mit Schritt 2 laufen jetzt auch Endpunkte, die die Repository-Schicht berühren
 (z. B. `analyzeIssue` über `ruleset-service.js`), außerhalb von Forge lauffähig — vorausgesetzt
 `AZURE_STORAGE_CONNECTION_STRING`/`AzureWebJobsStorage` zeigt auf einen Storage Account mit der
-Tabelle `qualityGateKeyValueStore` (siehe unten). `app-config-repository.js` (OpenAI-Key) liegt
-noch als Klartext in der Tabelle statt in Key Vault – das ist die verbleibende Härtung aus
-Schritt 2.
+Tabelle `qualityGateKeyValueStore` (siehe unten). Der OpenAI-Key selbst liegt nicht mehr als
+Klartext in dieser Tabelle, sobald `AZURE_KEY_VAULT_URL` gesetzt ist (siehe Key-Vault-Abschnitt
+unten).
 
 ## Setup
 
@@ -86,7 +86,33 @@ des PAT (siehe `src/auth/`, Schritt 3).
 | Variable | Zweck |
 | --- | --- |
 | `LLM_PROVIDER` | `openai` oder `disabled` |
-| `OPENAI_API_KEY` | OpenAI-API-Key (falls kein Storage-Wert über `app-config-repository.js` gesetzt ist) |
+| `OPENAI_API_KEY` | OpenAI-API-Key als letzter Fallback (falls weder Key Vault noch Table Storage einen Wert liefern) |
+
+### Umgebungsvariablen (für die OpenAI-Key-Härtung / Azure Key Vault)
+
+| Variable | Zweck |
+| --- | --- |
+| `AZURE_KEY_VAULT_URL` | z. B. `https://qualitygate-ai-kv.vault.azure.net`. Gesetzt → `app-config-repository.js` liest/schreibt den OpenAI-Key über `src/repositories/key-vault-store.js` (Key Vault) statt über Azure Table Storage. Ungesetzt → bisheriger Table-Storage-Pfad (lokaler Fallback). |
+| `OPENAI_SECRET_NAME` | Name des Secrets im Vault, Default `openai-api-key`. |
+
+Auth gegen Key Vault läuft über `DefaultAzureCredential` (System-assigned Managed Identity der
+Function App in Azure, `az login`/Umgebungsvariablen lokal) — kein zusätzliches Secret nötig, um
+selbst auf den Vault zuzugreifen.
+
+**Einmaliges Azure-Setup (manuell, nicht Teil dieses Repos):**
+
+```bash
+az keyvault create --name qualitygate-ai-kv --resource-group qualitygate-ai-rg --location westeurope
+az functionapp identity assign --name qualitygate-ai-api --resource-group qualitygate-ai-rg
+az keyvault set-policy --name qualitygate-ai-kv --object-id <function-app-principal-id> \
+  --secret-permissions get set delete
+az functionapp config appsettings set --name qualitygate-ai-api --resource-group qualitygate-ai-rg \
+  --settings AZURE_KEY_VAULT_URL=https://qualitygate-ai-kv.vault.azure.net
+```
+
+Danach den OpenAI-Key einmalig über `saveOpenAiApiKey`/`POST /api/api-key` (oder
+`az keyvault secret set`) im Vault ablegen; der bisherige Klartext-Wert in der Tabelle kann
+anschließend gelöscht werden.
 
 ### Umgebungsvariablen (für die Repository-Schicht / Azure Table Storage)
 
@@ -109,7 +135,7 @@ src/
   providers/llm/      # OpenAI-Anbindung, 1:1 aus dem Jira-Plugin übernommen
   services/           # Orchestrierung (Analyse, Fix-Vorschläge, Apply-Flow, ...)
   gateways/azure-devops/  # WIT-REST-API-Zugriff (Read/PATCH/WIQL)
-  repositories/       # Azure-Table-Storage-KV-Store + 7 Repository-Wrapper
+  repositories/       # Azure-Table-Storage-KV-Store + Key-Vault-Store + 7 Repository-Wrapper
   auth/               # Auth-Kontext, Token-Validierung, withAuth/assertAdmin (Schritt 3)
   functions/          # Azure-Functions-v4-HTTP-Endpunkte, nach Domäne gruppiert (Schritt 6)
   utils/
