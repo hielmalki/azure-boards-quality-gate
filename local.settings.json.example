@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+
+    "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/deine-org",
+    "AZURE_DEVOPS_PROJECT": "dein-projekt",
+    "AZURE_DEVOPS_PAT": "dein-personal-access-token",
+
+    "LLM_PROVIDER": "disabled",
+    "OPENAI_API_KEY": ""
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}

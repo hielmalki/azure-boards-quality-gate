@@ -13,3 +13,6 @@ Thumbs.db
 
 .env
 .env.local
+
+# Azure Functions Core Tools lokale Einstellungen (enthält Secrets)
+local.settings.json

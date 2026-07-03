@@ -1,0 +1,7 @@
+*.test.js
+tests/
+docs/
+AGENTS.md
+README.md
+.git*
+local.settings.json

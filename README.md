@@ -18,7 +18,7 @@ Extraktion, siehe unten).
 
 | Schritt | Status |
 | --- | --- |
-| 1. Backend-Host (Azure Functions) | ⬜ offen — es gibt noch keinen HTTP-Entrypoint/Host in diesem Repo |
+| 1. Backend-Host (Azure Functions) | 🟡 begonnen — Functions-v4-Projektgerüst + schmaler Vertikalschnitt (`/api/health`, `/api/work-items/{id}`) lokal verifiziert. Restliche ~28 Endpunkte fehlen noch. |
 | 2. Repository-Schicht (Azure Table Storage/Cosmos) + Key Vault | ⬜ offen — `src/repositories/*` nutzt noch `@forge/kvs` |
 | 3. Auth (SDK-Token-Validierung, Admin-Gate) | ⬜ offen |
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
@@ -26,16 +26,32 @@ Extraktion, siehe unten).
 | 6. Resolver → HTTP-Endpunkte | ⬜ offen |
 | 7. `vss-extension.json` + Frontend | ⬜ offen — Frontend ist bewusst nicht Teil dieses Repos (Stand: Extraktion) |
 
-**Wichtig:** Dieses Repo ist aktuell **nicht eigenständig lauffähig als Service** — es fehlt der
-Backend-Host (Schritt 1) und die Repository-Schicht ist noch Forge-KVS-gebunden (Schritt 2).
-`npm test` deckt die Domain-/Service-/Gateway-Logik über Unit-Tests ab, ohne echte Azure-
-Infrastruktur zu benötigen.
+**Wichtig:** Nur Endpunkte, die **nicht** über die Repository-Schicht laufen, sind aktuell
+end-to-end lauffähig (z. B. `getWorkItem`) — alles, was `src/repositories/*` berührt (u. a.
+`analyzeIssue` über `ruleset-service.js`), schlägt zur Laufzeit fehl, weil `@forge/kvs` außerhalb
+von Forge nicht funktioniert. Das ist der bekannte, offene Schritt 2.
 
 ## Setup
 
 ```bash
 npm install
 npm test
+```
+
+### Azure Functions lokal starten
+
+```bash
+cp local.settings.json.example local.settings.json   # echte ADO-Werte eintragen
+npm start                                             # ruft `func start` auf
+curl http://localhost:7071/api/health
+curl http://localhost:7071/api/work-items/<id>
+```
+
+Deploy auf die bestehende Function App (`qualitygate-ai-api`, Resource Group
+`qualitygate-ai-rg`):
+
+```bash
+func azure functionapp publish qualitygate-ai-api
 ```
 
 ### Umgebungsvariablen (für das Azure-DevOps-Gateway)
