@@ -7,6 +7,7 @@ import {
   isSafeWorkItemId,
   ACCEPTANCE_CRITERIA_FIELD_KEY,
 } from '../src/gateways/azure-devops/work-item-gateway.js';
+import { runWithAuthContext } from '../src/auth/auth-context.js';
 
 process.env.AZURE_DEVOPS_ORG_URL = 'https://dev.azure.com/test-org';
 process.env.AZURE_DEVOPS_PROJECT = 'QualityGate';
@@ -80,6 +81,30 @@ test('fetchIssueForAnalysis translates an Azure DevOps work item into the Jira-s
   assert.equal(issue.fields.status.name, 'Active');
   assert.equal(issue.fields.status.statusCategory.name, 'In Progress');
   assert.equal(issue.fields.timeoriginalestimate, 4 * 3600);
+});
+
+test('fetchIssueForAnalysis uses the request Bearer token from the auth context when present', async () => {
+  const { fetchFn, calls } = createFetchStub([
+    jsonResponse({ id: 42, fields: { 'System.Title': 'Titel' } }),
+  ]);
+
+  await runWithAuthContext({ token: 'sdk-access-token' }, () =>
+    fetchIssueForAnalysis('42', { fetchFn })
+  );
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer sdk-access-token');
+});
+
+test('fetchIssueForAnalysis falls back to the PAT when there is no auth context', async () => {
+  const { fetchFn, calls } = createFetchStub([
+    jsonResponse({ id: 42, fields: { 'System.Title': 'Titel' } }),
+  ]);
+
+  await fetchIssueForAnalysis('42', { fetchFn });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].init.headers.Authorization.startsWith('Basic '), true);
 });
 
 test('fetchIssueForAnalysis throws a descriptive error on a non-ok response', async () => {

@@ -6,10 +6,13 @@
 // jira-apply-service-core.js bereits konsumieren (Schritt 5) – damit bleiben
 // Domain/Service unverändert und nur diese Schicht kennt das ADO-Feldmodell.
 //
-// Auth: Personal Access Token (Basic-Auth), konfiguriert über Umgebungsvariablen.
-// Das ist die pragmatische Einsteiger-Variante aus der Umsetzungsanleitung
-// (Application Settings) – die spätere SDK-Token/On-Behalf-Of-Auth (Schritt 3)
-// ersetzt diese Konfigurationsquelle, ohne die Funktionssignaturen zu ändern.
+// Auth: SDK-Bearer-Token aus dem Request-Auth-Kontext (Schritt 3, Token-
+// Passthrough), sonst Fallback auf Personal Access Token (Basic-Auth) aus
+// Umgebungsvariablen – der pragmatische Einsteiger-Zwischenstand für lokale
+// Entwicklung/CI ohne echten SDK-Aufruf. Die Umstellung ändert bewusst nur die
+// Konfigurationsquelle, nicht die Funktionssignaturen dieses Moduls.
+
+import { getAuthContext } from '../../auth/auth-context.js';
 
 const API_VERSION = '7.1';
 
@@ -56,10 +59,17 @@ function getAzureDevOpsConfig() {
   const organizationUrl = process.env.AZURE_DEVOPS_ORG_URL;
   const project = process.env.AZURE_DEVOPS_PROJECT;
   const personalAccessToken = process.env.AZURE_DEVOPS_PAT;
+  const bearerToken = getAuthContext()?.token ?? null;
 
-  if (!organizationUrl || !project || !personalAccessToken) {
+  if (!organizationUrl || !project) {
     throw new Error(
-      'Azure DevOps ist nicht konfiguriert. AZURE_DEVOPS_ORG_URL, AZURE_DEVOPS_PROJECT und AZURE_DEVOPS_PAT müssen gesetzt sein.'
+      'Azure DevOps ist nicht konfiguriert. AZURE_DEVOPS_ORG_URL und AZURE_DEVOPS_PROJECT müssen gesetzt sein.'
+    );
+  }
+
+  if (!bearerToken && !personalAccessToken) {
+    throw new Error(
+      'Azure DevOps ist nicht konfiguriert. Es muss entweder ein Nutzer-Token (Auth-Kontext) oder AZURE_DEVOPS_PAT gesetzt sein.'
     );
   }
 
@@ -67,11 +77,16 @@ function getAzureDevOpsConfig() {
     organizationUrl: organizationUrl.replace(/\/+$/, ''),
     project,
     personalAccessToken,
+    bearerToken,
   };
 }
 
-function buildAuthHeader(personalAccessToken) {
-  const encoded = Buffer.from(`:${personalAccessToken}`, 'utf8').toString('base64');
+function buildAuthHeader(config) {
+  if (config.bearerToken) {
+    return `Bearer ${config.bearerToken}`;
+  }
+
+  const encoded = Buffer.from(`:${config.personalAccessToken}`, 'utf8').toString('base64');
   return `Basic ${encoded}`;
 }
 
@@ -146,7 +161,7 @@ export async function fetchIssueForAnalysis(workItemId, { fetchFn = globalThis.f
 
   const response = await fetchFn(url, {
     headers: {
-      Authorization: buildAuthHeader(config.personalAccessToken),
+      Authorization: buildAuthHeader(config),
       Accept: 'application/json',
     },
   });
@@ -192,7 +207,7 @@ export async function updateIssueFields(workItemId, fields, { fetchFn = globalTh
   const response = await fetchFn(url, {
     method: 'PATCH',
     headers: {
-      Authorization: buildAuthHeader(config.personalAccessToken),
+      Authorization: buildAuthHeader(config),
       'Content-Type': 'application/json-patch+json',
       Accept: 'application/json',
     },
@@ -258,7 +273,7 @@ export async function searchDuplicateCandidates(
   const searchResponse = await fetchFn(searchUrl, {
     method: 'POST',
     headers: {
-      Authorization: buildAuthHeader(config.personalAccessToken),
+      Authorization: buildAuthHeader(config),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
@@ -289,7 +304,7 @@ export async function searchDuplicateCandidates(
 
   const batchResponse = await fetchFn(batchUrl, {
     headers: {
-      Authorization: buildAuthHeader(config.personalAccessToken),
+      Authorization: buildAuthHeader(config),
       Accept: 'application/json',
     },
   });

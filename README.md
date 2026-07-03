@@ -20,7 +20,7 @@ Extraktion, siehe unten).
 | --- | --- |
 | 1. Backend-Host (Azure Functions) | 🟡 begonnen — Functions-v4-Projektgerüst + schmaler Vertikalschnitt (`/api/health`, `/api/work-items/{id}`) lokal verifiziert. Restliche ~28 Endpunkte fehlen noch. |
 | 2. Repository-Schicht (Azure Table Storage) + Key Vault | 🟡 begonnen — alle 7 Repositories laufen über `src/repositories/table-kv-store.js` (Azure Table Storage), Round-Trip gegen die echte Tabelle `qualityGateKeyValueStore` verifiziert. Key Vault für Secrets (statt Table/Env) noch offen. |
-| 3. Auth (SDK-Token-Validierung, Admin-Gate) | ⬜ offen |
+| 3. Auth (SDK-Token-Validierung, Admin-Gate) | 🟡 begonnen — `src/auth/{auth-context,sdk-token,require-auth,require-admin}.js`: Token-Passthrough (`Authorization: Bearer`) über einen request-scoped Auth-Kontext, Gateway nutzt Bearer-Token statt PAT sobald vorhanden (PAT bleibt lokaler Fallback), Admin-Gate über die ADO-Permissions-API (fail-closed). Noch offen: Anbindung an die Endpunkte (Schritt 6) und Verifizierung der Security-Namespace-/Bitmask-Werte gegen die Ziel-Organisation. |
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
 | 5. ADF → HTML, Akzeptanzkriterien natives Feld | ✅ `issue-service.js` (lesen), `azure-devops-apply-service-core.js` (schreiben) |
 | 6. Resolver → HTTP-Endpunkte | ⬜ offen |
@@ -64,8 +64,16 @@ func azure functionapp publish qualitygate-ai-api
 | `AZURE_DEVOPS_PROJECT` | Projektname in Azure Boards |
 | `AZURE_DEVOPS_PAT` | Personal Access Token (Work Items Read & Write) |
 
-Auth über PAT ist ein pragmatischer Zwischenstand (siehe Architektur-Doku, Schritt 3 ersetzt das
-später durch SDK-Token-Validierung).
+Auth über PAT ist ein pragmatischer Zwischenstand für lokale Entwicklung/CI. Sobald ein Request
+einen `Authorization: Bearer <SDK-Token>`-Header trägt, verwendet das Gateway dieses Token statt
+des PAT (siehe `src/auth/`, Schritt 3).
+
+### Umgebungsvariablen (für das Admin-Gate)
+
+| Variable | Zweck |
+| --- | --- |
+| `ADO_ADMIN_SECURITY_NAMESPACE_ID` | Überschreibt die Security-Namespace-ID der Permission-Prüfung (Default: `Project`-Namespace `52d39943-cb85-4d7f-8fa8-c6baac873819`). |
+| `ADO_ADMIN_PERMISSION_BITMASK` | Überschreibt die geprüfte Berechtigungs-Bitmaske (Default: `2`, `GENERIC_WRITE`). Vor Produktivbetrieb gegen die Ziel-Organisation verifizieren. |
 
 ### Umgebungsvariablen (für den LLM-Provider)
 

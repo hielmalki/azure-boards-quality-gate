@@ -25,7 +25,12 @@ den Backend-Code, der für die Azure-Migration relevant ist:
 - `src/services/*` — Orchestrierung, bereits auf Azure-DevOps-Feldmodell umgestellt (HTML statt
   ADF, natives Akzeptanzkriterien-Feld).
 - `src/gateways/azure-devops/*` — Gateway gegen die WIT-REST-API (ersetzt das frühere
-  Jira-Gateway).
+  Jira-Gateway). Nutzt seit Schritt 3 das SDK-Bearer-Token aus dem Auth-Kontext, sobald vorhanden;
+  PAT bleibt lokaler Fallback.
+- `src/auth/*` — Request-scoped Auth-Kontext (`auth-context.js`), Token-Extraktion/-Validierung
+  (`sdk-token.js`), `withAuth`-Wrapper für Function-Handler (`require-auth.js`) und das
+  fail-closed Admin-Gate über ADO-Permissions (`require-admin.js`). Schritt 3, noch nicht an die
+  Endpunkte in `src/functions/*` angebunden (folgt in Schritt 6).
 - `src/repositories/*` — migriert auf Azure Table Storage (`table-kv-store.js`), Round-Trip gegen
   die echte Tabelle `qualityGateKeyValueStore` verifiziert. Offen: der OpenAI-Key liegt noch als
   Klartext in der Tabelle statt in Key Vault (Härtung, Teil von Schritt 2).
