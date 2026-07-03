@@ -43,12 +43,21 @@ den Backend-Code, der für die Azure-Migration relevant ist:
   `assertAdmin`. Ausnahme: `fetchLabels` entfällt bewusst (Labels stecken bereits über
   `System.Tags` in `getNormalizedIssue`). Jeder Handler ist über `__testUtils` testbar
   (siehe `tests/*-functions.test.js`).
+- `web/*` — aus `jiraPlugin/static/hello-world` übernommenes React/Vite-Frontend, vollständig auf
+  das ADO-Extension-SDK umgestellt (Schritt 7): `@forge/bridge` `invoke()` → `web/src/api/invoke.ts`
+  (derselbe `invoke<T>(name, payload)`-Vertrag, mappt auf `fetch()` gegen `src/functions/*` +
+  SDK-Bearer-Token), `router.open()` → `window.open()` mit einer aus `SDK.getHost()`/
+  `SDK.getWebContext()` gebauten Work-Item-URL. Kein Frontend-Test-Setup vorhanden — Verifikation
+  über `tsc --noEmit`, `vite build`, `tfx extension create` und manuellen E2E-Test in einer
+  ADO-Test-Org.
+- `vss-extension.json` (Repo-Root) — ersetzt `manifest.yml`: `ms.vss-work-web.work-item-form-page`-
+  Contribution, Scopes `vso.work`/`vso.work_write`. `web/package.json` (`npm run package`) baut
+  das `.vsix` via `tfx-cli`.
 
 **Nicht** Teil dieses Repos (bewusst, Stand der Extraktion):
 - Forge-Resolver (`src/index.js` im jiraPlugin-Repo), `manifest.yml`, Forge-Deploy-Skripte —
-  komplett Forge-spezifisch, wird durch die Endpunkte in `src/functions/*` und
-  `vss-extension.json` (Schritt 7) ersetzt.
-- Frontend (`static/hello-world`) — noch vollständig `@forge/bridge`-basiert, nicht migriert.
+  komplett Forge-spezifisch und vollständig ersetzt (siehe oben); nur noch als historische
+  Referenz im jiraPlugin-Repo vorhanden.
 
 Bei jeder Aufgabe zuerst `docs/azure-boards-migration-architektur.md` konsultieren, um zu prüfen,
 in welchem Schritt der geplanten Reihenfolge die Aufgabe liegt und welche Annahmen (z. B.
@@ -119,11 +128,12 @@ Wenn PR/Merge blockiert ist (Berechtigungen, CI, Genehmigungen, Konflikte), expl
 Vor dem Abschluss einer Aufgabe relevante Prüfungen ausführen:
 
 ```bash
-npm test
+npm test               # Backend
+cd web && npx tsc --noEmit && npm run build   # Frontend, bei Änderungen an web/
 ```
 
-Es gibt (noch) keinen Frontend-Build und keinen Deploy-Schritt in diesem Repo (siehe Schritt 1/6/7
-in der Architektur-Doku). Wenn eine Prüfung fehlschlägt, beheben oder klar berichten, warum es
+Es gibt noch keinen Deploy-Schritt in diesem Repo (weder Function-App-CI/CD noch automatisierte
+`.vsix`-Veröffentlichung). Wenn eine Prüfung fehlschlägt, beheben oder klar berichten, warum es
 jetzt nicht behoben werden kann.
 
 ---
@@ -188,8 +198,9 @@ Nicht:
 - Branch-Protektionen umgehen
 - Blocker verstecken
 - nicht zusammenhängende Aufgaben ohne Erklärung in einem Commit/Branch mischen
-- Jira/Forge-Abhängigkeiten (`@forge/api`, `@forge/resolver`, `@forge/kvs`) wieder einführen —
-  dieses Repo ist vollständig Forge-frei (Schritt 2 hat `@forge/kvs` durch Azure Table Storage
+- Jira/Forge-Abhängigkeiten (`@forge/api`, `@forge/resolver`, `@forge/kvs`, `@forge/bridge`) wieder
+  einführen — dieses Repo ist vollständig Forge-frei (Schritt 2 hat `@forge/kvs` durch Azure Table
+  Storage ersetzt, Schritt 7 hat `@forge/bridge` im Frontend durch `azure-devops-extension-sdk`
   ersetzt)
 
 ---

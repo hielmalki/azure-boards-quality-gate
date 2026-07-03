@@ -1,0 +1,32 @@
+{
+  "name": "azure-boards-quality-gate-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "azure-devops-extension-sdk": "^5.0.0",
+    "@tailwindcss/vite": "^4.1.5",
+    "dompurify": "^3.3.3",
+    "lucide-react": "^0.511.0",
+    "marked": "^18.0.0",
+    "motion": "^12.9.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.5",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tfx-cli": "^0.17.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "package": "npm run build && tfx extension create --manifests ../vss-extension.json --output-path ../vsix-output"
+  }
+}

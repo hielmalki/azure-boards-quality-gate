@@ -3,9 +3,10 @@
 Backend-Code für die Azure-DevOps/Azure-Boards-Version von QualityGate AI.
 
 Dieses Repository ist aus dem ursprünglichen Jira-Forge-Plugin ([`jiraPlugin`](../jiraPlugin))
-herausgelöst. Es enthält nur den Teil der Codebase, der für die Azure-Migration relevant ist bzw.
-schon darauf umgestellt wurde — kein Forge-Resolver, kein `manifest.yml`, kein Frontend (Stand:
-Extraktion, siehe unten).
+herausgelöst. Backend (`src/`) und Frontend (`web/`, aus `jiraPlugin/static/hello-world`
+übernommen) sind vollständig auf Azure DevOps umgestellt: kein Forge-Resolver, kein `@forge/bridge`,
+kein `manifest.yml` mehr — stattdessen Azure-Functions-HTTP-Endpunkte, das ADO-Extension-SDK und
+`vss-extension.json`.
 
 ## Quelle der Wahrheit
 
@@ -24,7 +25,7 @@ Extraktion, siehe unten).
 | 4. Gateway gegen Azure DevOps WIT-REST-API | ✅ `src/gateways/azure-devops/work-item-gateway.js` |
 | 5. ADF → HTML, Akzeptanzkriterien natives Feld | ✅ `issue-service.js` (lesen), `azure-devops-apply-service-core.js` (schreiben) |
 | 6. Resolver → HTTP-Endpunkte | ✅ Alle 27 Forge-Resolver aus `jiraPlugin/src/index.js` als `app.http`-Endpunkte in `src/functions/{work-items,analysis,fix-suggestions,rulesets,api-key,user-state,llm}.js` nachgebaut, hinter `withAuth`/`assertAdmin` (Schritt 3). Ausnahme: `fetchLabels` entfällt bewusst — Labels stecken über `System.Tags` bereits in `getNormalizedIssue`. |
-| 7. `vss-extension.json` + Frontend | ⬜ offen — Frontend ist bewusst nicht Teil dieses Repos (Stand: Extraktion) |
+| 7. `vss-extension.json` + Frontend | ✅ Frontend nach `web/` übernommen, `@forge/bridge` durch `azure-devops-extension-sdk` + einen `invoke()`-kompatiblen `fetch()`-Shim (`web/src/api/invoke.ts`) ersetzt; `vss-extension.json` deklariert eine Work-Item-Form-Page-Contribution mit den Scopes `vso.work`/`vso.work_write`. `npm run package` in `web/` baut ein installierbares `.vsix` (lokal verifiziert). Offen: echter End-to-End-Test in einer ADO-Test-Org (Freigabe/Install), Marketplace-PNG-Icon (aktuell SVG). |
 
 **Wichtig:** Mit Schritt 2 laufen jetzt auch Endpunkte, die die Repository-Schicht berühren
 (z. B. `analyzeIssue` über `ruleset-service.js`), außerhalb von Forge lauffähig — vorausgesetzt
@@ -52,7 +53,8 @@ curl -X POST -H "Authorization: Bearer <token>" http://localhost:7071/api/work-i
 
 Alle Endpunkte außer `/api/health` erfordern den `Authorization: Bearer <token>`-Header (Schritt 3).
 Lokal kann ein PAT als Bearer-Wert eingesetzt werden; in der Extension liefert
-`SDK.getAccessToken()` das echte Token (Schritt 7). Die vollständige Endpunkt-Liste steht in
+`SDK.getAccessToken()` das echte Token (siehe `web/src/api/invoke.ts`, Schritt 7). Die vollständige
+Endpunkt-Liste steht in
 `src/functions/{work-items,analysis,fix-suggestions,rulesets,api-key,user-state,llm}.js`.
 
 Deploy auf die bestehende Function App (`qualitygate-ai-api`, Resource Group
@@ -127,6 +129,39 @@ Die Tabelle muss einmalig existieren (wurde für `qualitygateaifr` bereits angel
 az storage table create --name qualityGateKeyValueStore --account-name qualitygateaifr --auth-mode login
 ```
 
+## Frontend (`web/`) und Extension-Paketierung
+
+`web/` ist das aus `jiraPlugin/static/hello-world` übernommene React/Vite-Frontend (Schritt 7).
+`@forge/bridge` wurde vollständig ersetzt:
+
+- `azure-devops-extension-sdk` für `SDK.init()`/`SDK.ready()`/`SDK.getAccessToken()`
+  (`web/src/main.tsx`).
+- `web/src/api/invoke.ts` — Drop-in-Ersatz für `invoke()` aus `@forge/bridge` mit derselben
+  Signatur `invoke<T>(name, payload)`. Bildet jeden bisherigen Forge-Resolver-Namen auf
+  Methode + Pfad des passenden `src/functions/*`-Endpunkts ab und hängt das SDK-Bearer-Token an.
+  Die 7 Aufrufer-Dateien (`api-key-data.ts`, `components/rulesets-data.ts`,
+  `components/triage-panel/{use-analysis-flow.ts,use-fix-flow.ts,batch-fix-flow.tsx}`,
+  `hooks/{useDuplicateCheck.ts,useTokenUsage.ts}`) mussten dafür nur ihren Import umstellen.
+- `components/triage-panel/duplicate-section.tsx`: `router.open('/browse/KEY')` (Forge) →
+  `window.open()` auf die Work-Item-Form-URL, gebaut aus `SDK.getHost()`/`SDK.getWebContext()`.
+
+```bash
+cd web
+npm install
+npm run build      # vite build -> web/build
+npm run package    # baut + tfx extension create -> ../vsix-output/*.vsix
+```
+
+`VITE_API_BASE_URL` (Build-Env) überschreibt die Backend-URL, Default
+`https://qualitygate-ai-api.azurewebsites.net`.
+
+`vss-extension.json` (Repo-Root, ersetzt `manifest.yml`) deklariert eine
+`ms.vss-work-web.work-item-form-page`-Contribution (eigener Tab im Work-Item-Formular) mit den
+Scopes `vso.work`/`vso.work_write`. Veröffentlichen/Teilen mit einer ADO-Organisation läuft über
+`tfx extension publish`/die Marketplace-UI (nicht Teil dieses Repos) — vor einer echten
+Veröffentlichung noch ein PNG-Marketplace-Icon ergänzen (aktuell nur `web/public/icon.svg`, das für
+die Work-Item-Tab-Contribution selbst ausreicht).
+
 ## Struktur
 
 ```
@@ -139,5 +174,8 @@ src/
   auth/               # Auth-Kontext, Token-Validierung, withAuth/assertAdmin (Schritt 3)
   functions/          # Azure-Functions-v4-HTTP-Endpunkte, nach Domäne gruppiert (Schritt 6)
   utils/
+web/                 # React/Vite-Frontend, ADO-Extension-SDK statt @forge/bridge (Schritt 7)
+  src/api/invoke.ts   # invoke()-kompatibler fetch()-Shim gegen die Backend-Endpunkte
+vss-extension.json   # ADO-Extension-Manifest (ersetzt manifest.yml)
 tests/
 ```
