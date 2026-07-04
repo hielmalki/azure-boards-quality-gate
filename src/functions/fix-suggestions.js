@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import {
   generateSingleFixSuggestion,
@@ -178,52 +179,52 @@ const reviseWorkItemSuggestionWithLlmHandler = withAuth(async (request, context)
 });
 
 app.http('generateWorkItemFixSuggestion', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions',
-  handler: generateWorkItemFixSuggestionHandler,
+  handler: withCors(generateWorkItemFixSuggestionHandler),
 });
 
 app.http('generateWorkItemBatchFixSuggestions', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/batch',
-  handler: generateWorkItemBatchFixSuggestionsHandler,
+  handler: withCors(generateWorkItemBatchFixSuggestionsHandler),
 });
 
 app.http('startWorkItemFixSuggestionStream', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/stream',
-  handler: startWorkItemFixSuggestionStreamHandler,
+  handler: withCors(startWorkItemFixSuggestionStreamHandler),
 });
 
 app.http('getWorkItemFixSuggestionStreamResult', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/stream/{runId}',
-  handler: getWorkItemFixSuggestionStreamResultHandler,
+  handler: withCors(getWorkItemFixSuggestionStreamResultHandler),
 });
 
 app.http('assistWorkItemAnalysisWithLlm', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'llm/analysis-assist',
-  handler: assistWorkItemAnalysisWithLlmHandler,
+  handler: withCors(assistWorkItemAnalysisWithLlmHandler),
 });
 
 app.http('generateWorkItemSuggestionWithLlm', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'llm/suggestion',
-  handler: generateWorkItemSuggestionWithLlmHandler,
+  handler: withCors(generateWorkItemSuggestionWithLlmHandler),
 });
 
 app.http('reviseWorkItemSuggestionWithLlm', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'llm/suggestion/revise',
-  handler: reviseWorkItemSuggestionWithLlmHandler,
+  handler: withCors(reviseWorkItemSuggestionWithLlmHandler),
 });
 
 export const __testUtils = {

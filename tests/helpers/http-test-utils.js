@@ -1,8 +1,9 @@
 // Gemeinsame Test-Helfer für die Azure-Functions-Endpunkte in src/functions/
 // (Schritt 6). Kein *.test.js-Suffix, daher nicht Teil der `npm test`-Glob.
 
-export function fakeRequest({ token = 'valid-token', params = {}, query = {}, jsonBody = {} } = {}) {
+export function fakeRequest({ method = 'GET', token = 'valid-token', params = {}, query = {}, jsonBody = {} } = {}) {
   return {
+    method,
     headers: {
       get(name) {
         return name.toLowerCase() === 'authorization' && token ? `Bearer ${token}` : null;

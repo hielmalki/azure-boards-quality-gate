@@ -2,6 +2,7 @@ import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { assertAdmin } from '../auth/require-admin.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import {
   createCustomRuleset,
@@ -104,38 +105,38 @@ const deleteCustomRulesetHandler = withAuth(async (request, context) => {
 });
 
 app.http('getRulesetsState', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'rulesets',
-  handler: getRulesetsStateHandler,
+  handler: withCors(getRulesetsStateHandler),
 });
 
 app.http('saveActiveRulesets', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'rulesets/active',
-  handler: saveActiveRulesetsHandler,
+  handler: withCors(saveActiveRulesetsHandler),
 });
 
 app.http('createCustomRuleset', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'rulesets/custom',
-  handler: createCustomRulesetHandler,
+  handler: withCors(createCustomRulesetHandler),
 });
 
 app.http('updateCustomRuleset', {
-  methods: ['PUT'],
+  methods: ['PUT', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'rulesets/custom/{id}',
-  handler: updateCustomRulesetHandler,
+  handler: withCors(updateCustomRulesetHandler),
 });
 
 app.http('deleteCustomRuleset', {
-  methods: ['DELETE'],
+  methods: ['DELETE', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'rulesets/custom/{id}',
-  handler: deleteCustomRulesetHandler,
+  handler: withCors(deleteCustomRulesetHandler),
 });
 
 export const __testUtils = {

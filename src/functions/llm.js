@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { mapErrorToResponse } from '../utils/http-responses.js';
 import { getLlmProviderStatus } from '../services/llm-service.js';
 import { getTokenUsage } from '../services/ai-usage-service.js';
@@ -37,17 +38,17 @@ const getTokenUsageHandler = withAuth(async (request, context) => {
 });
 
 app.http('getLlmProviderStatus', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'llm/provider',
-  handler: getLlmProviderStatusHandler,
+  handler: withCors(getLlmProviderStatusHandler),
 });
 
 app.http('getTokenUsage', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'usage',
-  handler: getTokenUsageHandler,
+  handler: withCors(getTokenUsageHandler),
 });
 
 export const __testUtils = {

@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import { startIssueAnalysis, getIssueAnalysisResult } from '../services/analysis-run-service.js';
 import { logError, logInfo } from '../utils/logger.js';
@@ -53,17 +54,17 @@ const getWorkItemAnalysisResultHandler = withAuth(async (request, context) => {
 });
 
 app.http('startWorkItemAnalysis', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analysis',
-  handler: startWorkItemAnalysisHandler,
+  handler: withCors(startWorkItemAnalysisHandler),
 });
 
 app.http('getWorkItemAnalysisResult', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analysis',
-  handler: getWorkItemAnalysisResultHandler,
+  handler: withCors(getWorkItemAnalysisResultHandler),
 });
 
 export const __testUtils = {

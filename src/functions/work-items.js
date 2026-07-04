@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import { getNormalizedIssue } from '../services/issue-service.js';
 import { analyzeIssue } from '../services/analysis-service.js';
@@ -148,38 +149,38 @@ const checkWorkItemDuplicatesHandler = withAuth(async (request, context) => {
 });
 
 app.http('getWorkItem', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}',
-  handler: getWorkItemHandler,
+  handler: withCors(getWorkItemHandler),
 });
 
 app.http('analyzeWorkItem', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analyze',
-  handler: analyzeWorkItemHandler,
+  handler: withCors(analyzeWorkItemHandler),
 });
 
 app.http('applyWorkItemFix', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/apply',
-  handler: applyWorkItemFixHandler,
+  handler: withCors(applyWorkItemFixHandler),
 });
 
 app.http('applyWorkItemBatchFix', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/apply-batch',
-  handler: applyWorkItemBatchFixHandler,
+  handler: withCors(applyWorkItemBatchFixHandler),
 });
 
 app.http('checkWorkItemDuplicates', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/duplicates',
-  handler: checkWorkItemDuplicatesHandler,
+  handler: withCors(checkWorkItemDuplicatesHandler),
 });
 
 export const __testUtils = {

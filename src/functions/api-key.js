@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { assertAdmin } from '../auth/require-admin.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import { getApiKeyStatus, saveOpenAiApiKey, deleteOpenAiApiKey } from '../services/api-key-service.js';
 import { logError, logInfo } from '../utils/logger.js';
@@ -50,24 +51,24 @@ const deleteOpenAiApiKeyHandler = withAuth(async (request, context) => {
 });
 
 app.http('getApiKeyStatus', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'api-key',
-  handler: getApiKeyStatusHandler,
+  handler: withCors(getApiKeyStatusHandler),
 });
 
 app.http('saveOpenAiApiKey', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'api-key',
-  handler: saveOpenAiApiKeyHandler,
+  handler: withCors(saveOpenAiApiKeyHandler),
 });
 
 app.http('deleteOpenAiApiKey', {
-  methods: ['DELETE'],
+  methods: ['DELETE', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'api-key',
-  handler: deleteOpenAiApiKeyHandler,
+  handler: withCors(deleteOpenAiApiKeyHandler),
 });
 
 export const __testUtils = {

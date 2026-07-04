@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { withAuth } from '../auth/require-auth.js';
 import { getAuthContext } from '../auth/auth-context.js';
+import { withCors } from '../utils/cors.js';
 import { readJsonBody, mapErrorToResponse } from '../utils/http-responses.js';
 import { getUserState, updateUserState } from '../services/user-state-service.js';
 import { logError, logInfo } from '../utils/logger.js';
@@ -42,17 +43,17 @@ const updateUserStateHandler = withAuth(async (request, context) => {
 });
 
 app.http('getUserState', {
-  methods: ['GET'],
+  methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'user-state',
-  handler: getUserStateHandler,
+  handler: withCors(getUserStateHandler),
 });
 
 app.http('updateUserState', {
-  methods: ['POST'],
+  methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
   route: 'user-state',
-  handler: updateUserStateHandler,
+  handler: withCors(updateUserStateHandler),
 });
 
 export const __testUtils = {
