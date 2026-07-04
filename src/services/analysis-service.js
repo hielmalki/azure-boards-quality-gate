@@ -112,6 +112,7 @@ export function buildCacheKeyFingerprint(issue, activeRulesetIds) {
       labels: Array.isArray(issue?.labels) ? [...issue.labels].sort() : [],
       estimateSeconds: issue?.estimate?.seconds ?? null,
       estimateDisplay: issue?.estimate?.display ?? null,
+      acceptanceCriteria: issue?.acceptanceCriteria ?? null,
     },
     activeRulesetIds: Array.isArray(activeRulesetIds) ? [...activeRulesetIds] : [],
   };

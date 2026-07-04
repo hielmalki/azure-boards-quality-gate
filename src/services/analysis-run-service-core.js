@@ -101,6 +101,7 @@ function buildCacheKeyFingerprint(normalizedIssue, activeRulesetIds) {
       labels: Array.isArray(normalizedIssue?.labels) ? [...normalizedIssue.labels].sort() : [],
       estimateSeconds: normalizedIssue?.estimate?.seconds ?? null,
       estimateDisplay: normalizedIssue?.estimate?.display ?? null,
+      acceptanceCriteria: normalizedIssue?.acceptanceCriteria ?? null,
     },
     activeRulesetIds: Array.isArray(activeRulesetIds) ? [...activeRulesetIds] : [],
   }));

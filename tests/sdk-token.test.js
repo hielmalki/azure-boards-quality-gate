@@ -35,29 +35,51 @@ test('extractBearerToken returns null for non-Bearer schemes', () => {
   assert.equal(extractBearerToken({ headers: { authorization: 'Basic dXNlcjpwYXNz' } }), null);
 });
 
-test('resolveUserId returns the profile id on a successful response', async () => {
-  const fetchFn = async () => ({
-    ok: true,
-    status: 200,
-    statusText: 'OK',
-    json: async () => ({ id: 'user-guid-123', displayName: 'Test User' }),
-  });
+test('resolveUserId returns the authenticated user id on a successful response', async () => {
+  process.env.AZURE_DEVOPS_ORG_URL = 'https://dev.azure.com/test-org';
+  let requestedUrl;
+  const fetchFn = async url => {
+    requestedUrl = String(url);
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ authenticatedUser: { id: 'user-guid-123' } }),
+    };
+  };
 
   const userId = await resolveUserId('some-token', { fetchFn });
   assert.equal(userId, 'user-guid-123');
+  assert.match(requestedUrl, /\/_apis\/connectionData/);
+  delete process.env.AZURE_DEVOPS_ORG_URL;
 });
 
 test('resolveUserId throws a descriptive error on a non-ok response', async () => {
+  process.env.AZURE_DEVOPS_ORG_URL = 'https://dev.azure.com/test-org';
   const fetchFn = async () => ({ ok: false, status: 401, statusText: 'Unauthorized' });
 
   await assert.rejects(
     () => resolveUserId('bad-token', { fetchFn }),
     /Failed to resolve Azure DevOps identity: 401 Unauthorized/
   );
+  delete process.env.AZURE_DEVOPS_ORG_URL;
 });
 
-test('resolveUserId throws when the profile response has no id', async () => {
-  const fetchFn = async () => ({ ok: true, status: 200, statusText: 'OK', json: async () => ({}) });
+test('resolveUserId throws when the connectionData response has no authenticated user id', async () => {
+  process.env.AZURE_DEVOPS_ORG_URL = 'https://dev.azure.com/test-org';
+  const fetchFn = async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    json: async () => ({ authenticatedUser: {} }),
+  });
 
-  await assert.rejects(() => resolveUserId('token', { fetchFn }), /did not include an id/);
+  await assert.rejects(() => resolveUserId('token', { fetchFn }), /did not include an authenticated user id/);
+  delete process.env.AZURE_DEVOPS_ORG_URL;
+});
+
+test('resolveUserId throws when AZURE_DEVOPS_ORG_URL is not configured', async () => {
+  delete process.env.AZURE_DEVOPS_ORG_URL;
+
+  await assert.rejects(() => resolveUserId('token', { fetchFn: async () => ({}) }), /AZURE_DEVOPS_ORG_URL/);
 });

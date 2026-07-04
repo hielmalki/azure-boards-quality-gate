@@ -37,10 +37,27 @@ function buildCacheKeyFingerprint(normalizedIssue, activeRulesetIds) {
       labels: Array.isArray(normalizedIssue?.labels) ? [...normalizedIssue.labels].sort() : [],
       estimateSeconds: normalizedIssue?.estimate?.seconds ?? null,
       estimateDisplay: normalizedIssue?.estimate?.display ?? null,
+      acceptanceCriteria: normalizedIssue?.acceptanceCriteria ?? null,
     },
     activeRulesetIds: Array.isArray(activeRulesetIds) ? [...activeRulesetIds] : [],
   }));
 }
+
+test('buildCacheKeyFingerprint changes when acceptance criteria are cleared', () => {
+  const baseIssue = {
+    key: 'KAN-1',
+    summary: 'Als Nutzer möchte ich mich einloggen',
+    description: 'Beschreibung',
+  };
+
+  const withAcceptanceCriteria = { ...baseIssue, acceptanceCriteria: '1. Login funktioniert' };
+  const withoutAcceptanceCriteria = { ...baseIssue, acceptanceCriteria: null };
+
+  const fingerprintWith = buildCacheKeyFingerprint(withAcceptanceCriteria, ['basic-quality']);
+  const fingerprintWithout = buildCacheKeyFingerprint(withoutAcceptanceCriteria, ['basic-quality']);
+
+  assert.notEqual(fingerprintWith, fingerprintWithout);
+});
 
 async function waitFor(predicate, { timeoutMs = 250, intervalMs = 5 } = {}) {
   const startedAt = Date.now();

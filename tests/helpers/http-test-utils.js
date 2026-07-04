@@ -44,14 +44,14 @@ export function installFetchRouter(routes) {
 
 export function profileRoute({ userId = 'user-guid' } = {}) {
   return {
-    test: url => url.includes('vssps.visualstudio.com/_apis/profile/profiles/me'),
-    respond: async () => ({ ok: true, json: async () => ({ id: userId }) }),
+    test: url => url.includes('/_apis/connectionData'),
+    respond: async () => ({ ok: true, json: async () => ({ authenticatedUser: { id: userId } }) }),
   };
 }
 
 export function permissionsRoute({ granted }) {
   return {
     test: url => url.includes('/_apis/permissions/'),
-    respond: async () => ({ ok: true, json: async () => ({ value: granted }) }),
+    respond: async () => ({ ok: true, json: async () => ({ value: [granted] }) }),
   };
 }

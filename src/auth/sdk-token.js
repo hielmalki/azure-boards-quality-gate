@@ -3,8 +3,12 @@
 // `SDK.getAccessToken()` gewonnene Token als `Authorization: Bearer <token>`;
 // dieses Modul liest es aus und löst die stabile ADO-Nutzeridentität auf
 // (Ersatz für Forges `context.accountId`).
-
-const PROFILE_API_URL = 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1';
+//
+// `SDK.getAccessToken()` liefert ein Token, dessen Audience auf die
+// Organisation beschränkt ist. Die globale, org-übergreifende Profile-API
+// (app.vssps.visualstudio.com) lehnt ein solches Token ab (401) — deshalb wird
+// hier bewusst derselbe org-scoped Endpunkt genutzt, den auch Gateway und
+// Admin-Gate für dieses Token verwenden (`{orgUrl}/_apis/...`).
 
 export function extractBearerToken(request) {
   const headerValue =
@@ -21,7 +25,17 @@ export function extractBearerToken(request) {
 }
 
 export async function resolveUserId(token, { fetchFn = globalThis.fetch } = {}) {
-  const response = await fetchFn(PROFILE_API_URL, {
+  const organizationUrl = process.env.AZURE_DEVOPS_ORG_URL;
+
+  if (!organizationUrl) {
+    throw new Error('Azure DevOps ist nicht konfiguriert. AZURE_DEVOPS_ORG_URL muss gesetzt sein.');
+  }
+
+  const url = new URL(`${organizationUrl.replace(/\/+$/, '')}/_apis/connectionData`);
+  url.searchParams.set('connectOptions', 'none');
+  url.searchParams.set('api-version', '7.1-preview.1');
+
+  const response = await fetchFn(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
@@ -32,11 +46,12 @@ export async function resolveUserId(token, { fetchFn = globalThis.fetch } = {}) 
     throw new Error(`Failed to resolve Azure DevOps identity: ${response.status} ${response.statusText}`);
   }
 
-  const profile = await response.json();
+  const connectionData = await response.json();
+  const userId = connectionData?.authenticatedUser?.id;
 
-  if (!profile?.id) {
-    throw new Error('Azure DevOps profile response did not include an id.');
+  if (!userId) {
+    throw new Error('Azure DevOps connectionData response did not include an authenticated user id.');
   }
 
-  return profile.id;
+  return userId;
 }

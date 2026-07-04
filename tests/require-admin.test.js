@@ -3,20 +3,35 @@ import assert from 'node:assert/strict';
 import { assertAdmin } from '../src/auth/require-admin.js';
 import { runWithAuthContext } from '../src/auth/auth-context.js';
 
-const baseContext = { token: 'user-token', orgUrl: 'https://dev.azure.com/test-org', project: 'QualityGate' };
+const baseContext = {
+  token: 'user-token',
+  orgUrl: 'https://dev.azure.com/test-org',
+  project: 'QualityGate',
+  userId: 'user-guid',
+};
 
 test('assertAdmin fails closed when there is no auth context', async () => {
   await assert.rejects(() => assertAdmin(), error => error.code === 'FORBIDDEN');
 });
 
+test('assertAdmin resolves via the allowlist without calling the permissions endpoint', async () => {
+  process.env.ADO_ADMIN_USER_IDS = 'user-guid';
+  const fetchFn = async () => {
+    throw new Error('fetch should not be called when the user is allowlisted');
+  };
+
+  await assert.doesNotReject(() => runWithAuthContext(baseContext, () => assertAdmin({ fetchFn })));
+  delete process.env.ADO_ADMIN_USER_IDS;
+});
+
 test('assertAdmin resolves when the permissions endpoint confirms the permission', async () => {
-  const fetchFn = async () => ({ ok: true, json: async () => ({ value: true }) });
+  const fetchFn = async () => ({ ok: true, json: async () => ({ value: [true] }) });
 
   await assert.doesNotReject(() => runWithAuthContext(baseContext, () => assertAdmin({ fetchFn })));
 });
 
 test('assertAdmin fails closed when the permissions endpoint denies the permission', async () => {
-  const fetchFn = async () => ({ ok: true, json: async () => ({ value: false }) });
+  const fetchFn = async () => ({ ok: true, json: async () => ({ value: [false] }) });
 
   await assert.rejects(
     () => runWithAuthContext(baseContext, () => assertAdmin({ fetchFn })),

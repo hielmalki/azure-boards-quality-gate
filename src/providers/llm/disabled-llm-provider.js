@@ -37,6 +37,11 @@ export class DisabledLlmProvider extends LlmProvider {
     return buildUnavailableResult(this, LLM_TASKS.GENERATE_SUGGESTION, input);
   }
 
+  async generateSuggestionStream(input, _callbacks) {
+    this.assertSupportedTask(LLM_TASKS.GENERATE_SUGGESTION);
+    return buildUnavailableResult(this, LLM_TASKS.GENERATE_SUGGESTION, input);
+  }
+
   async reviseSuggestion(input) {
     this.assertSupportedTask(LLM_TASKS.REVISE_SUGGESTION);
     return buildUnavailableResult(this, LLM_TASKS.REVISE_SUGGESTION, input);

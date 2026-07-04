@@ -26,10 +26,27 @@ function getPermissionCheckConfig() {
   };
 }
 
-function forbiddenError(message) {
-  const error = new Error(message);
+function forbiddenError(message, userId) {
+  const suffix = userId ? ` (Deine Nutzer-ID: ${userId})` : '';
+  const error = new Error(`${message}${suffix}`);
   error.code = 'FORBIDDEN';
   return error;
+}
+
+// Deterministische Allowlist als Hauptpfad: die ADO-Permission-API ist
+// prozess-template-abhängig und liefert `value` als Array statt Boolean
+// (siehe Bugfix unten), daher ist eine explizite Liste bekannter Admin-IDs
+// zuverlässiger als der reine Permission-Check.
+function getAllowlistedAdminIds() {
+  return (process.env.ADO_ADMIN_USER_IDS ?? '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean);
+}
+
+function extractHasPermission(data) {
+  const value = Array.isArray(data) ? data : data?.value;
+  return Array.isArray(value) ? value[0] === true : value === true;
 }
 
 // fail-closed (bewusste Abkehr von Forges fail-open-`assertAdmin`): jede
@@ -40,6 +57,10 @@ export async function assertAdmin({ fetchFn = globalThis.fetch } = {}) {
 
   if (!authContext?.token || !authContext?.orgUrl) {
     throw forbiddenError('Diese Aktion erfordert Azure-DevOps-Administratorrechte.');
+  }
+
+  if (getAllowlistedAdminIds().includes(authContext.userId)) {
+    return;
   }
 
   const { securityNamespaceId, permissionBitmask } = getPermissionCheckConfig();
@@ -63,13 +84,13 @@ export async function assertAdmin({ fetchFn = globalThis.fetch } = {}) {
     }
 
     const data = await response.json().catch(() => null);
-    hasPermission = data?.value === true;
+    hasPermission = extractHasPermission(data);
   } catch (error) {
     logError('auth.admin_check_failed', error);
-    throw forbiddenError('Diese Aktion erfordert Azure-DevOps-Administratorrechte.');
+    throw forbiddenError('Diese Aktion erfordert Azure-DevOps-Administratorrechte.', authContext.userId);
   }
 
   if (!hasPermission) {
-    throw forbiddenError('Diese Aktion erfordert Azure-DevOps-Administratorrechte.');
+    throw forbiddenError('Diese Aktion erfordert Azure-DevOps-Administratorrechte.', authContext.userId);
   }
 }
