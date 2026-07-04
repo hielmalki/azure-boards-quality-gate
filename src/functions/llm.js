@@ -38,14 +38,14 @@ const getTokenUsageHandler = withAuth(async (request, context) => {
 });
 
 app.http('getLlmProviderStatus', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'llm/provider',
   handler: withCors(getLlmProviderStatusHandler),
 });
 
 app.http('getTokenUsage', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'usage',
   handler: withCors(getTokenUsageHandler),

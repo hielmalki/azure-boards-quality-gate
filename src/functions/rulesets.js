@@ -105,35 +105,35 @@ const deleteCustomRulesetHandler = withAuth(async (request, context) => {
 });
 
 app.http('getRulesetsState', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'rulesets',
   handler: withCors(getRulesetsStateHandler),
 });
 
 app.http('saveActiveRulesets', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'rulesets/active',
   handler: withCors(saveActiveRulesetsHandler),
 });
 
 app.http('createCustomRuleset', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'rulesets/custom',
   handler: withCors(createCustomRulesetHandler),
 });
 
 app.http('updateCustomRuleset', {
-  methods: ['PUT', 'OPTIONS'],
+  methods: ['PUT'],
   authLevel: 'anonymous',
   route: 'rulesets/custom/{id}',
   handler: withCors(updateCustomRulesetHandler),
 });
 
 app.http('deleteCustomRuleset', {
-  methods: ['DELETE', 'OPTIONS'],
+  methods: ['DELETE'],
   authLevel: 'anonymous',
   route: 'rulesets/custom/{id}',
   handler: withCors(deleteCustomRulesetHandler),

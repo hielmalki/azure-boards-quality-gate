@@ -51,21 +51,21 @@ const deleteOpenAiApiKeyHandler = withAuth(async (request, context) => {
 });
 
 app.http('getApiKeyStatus', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'api-key',
   handler: withCors(getApiKeyStatusHandler),
 });
 
 app.http('saveOpenAiApiKey', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'api-key',
   handler: withCors(saveOpenAiApiKeyHandler),
 });
 
 app.http('deleteOpenAiApiKey', {
-  methods: ['DELETE', 'OPTIONS'],
+  methods: ['DELETE'],
   authLevel: 'anonymous',
   route: 'api-key',
   handler: withCors(deleteOpenAiApiKeyHandler),

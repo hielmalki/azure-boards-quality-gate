@@ -43,14 +43,14 @@ const updateUserStateHandler = withAuth(async (request, context) => {
 });
 
 app.http('getUserState', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'user-state',
   handler: withCors(getUserStateHandler),
 });
 
 app.http('updateUserState', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'user-state',
   handler: withCors(updateUserStateHandler),

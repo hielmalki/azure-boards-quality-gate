@@ -54,14 +54,14 @@ const getWorkItemAnalysisResultHandler = withAuth(async (request, context) => {
 });
 
 app.http('startWorkItemAnalysis', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analysis',
   handler: withCors(startWorkItemAnalysisHandler),
 });
 
 app.http('getWorkItemAnalysisResult', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analysis',
   handler: withCors(getWorkItemAnalysisResultHandler),

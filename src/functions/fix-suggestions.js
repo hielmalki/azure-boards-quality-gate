@@ -179,49 +179,49 @@ const reviseWorkItemSuggestionWithLlmHandler = withAuth(async (request, context)
 });
 
 app.http('generateWorkItemFixSuggestion', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions',
   handler: withCors(generateWorkItemFixSuggestionHandler),
 });
 
 app.http('generateWorkItemBatchFixSuggestions', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/batch',
   handler: withCors(generateWorkItemBatchFixSuggestionsHandler),
 });
 
 app.http('startWorkItemFixSuggestionStream', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/stream',
   handler: withCors(startWorkItemFixSuggestionStreamHandler),
 });
 
 app.http('getWorkItemFixSuggestionStreamResult', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/fix-suggestions/stream/{runId}',
   handler: withCors(getWorkItemFixSuggestionStreamResultHandler),
 });
 
 app.http('assistWorkItemAnalysisWithLlm', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'llm/analysis-assist',
   handler: withCors(assistWorkItemAnalysisWithLlmHandler),
 });
 
 app.http('generateWorkItemSuggestionWithLlm', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'llm/suggestion',
   handler: withCors(generateWorkItemSuggestionWithLlmHandler),
 });
 
 app.http('reviseWorkItemSuggestionWithLlm', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'llm/suggestion/revise',
   handler: withCors(reviseWorkItemSuggestionWithLlmHandler),

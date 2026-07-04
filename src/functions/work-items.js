@@ -149,35 +149,35 @@ const checkWorkItemDuplicatesHandler = withAuth(async (request, context) => {
 });
 
 app.http('getWorkItem', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'work-items/{id}',
   handler: withCors(getWorkItemHandler),
 });
 
 app.http('analyzeWorkItem', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/analyze',
   handler: withCors(analyzeWorkItemHandler),
 });
 
 app.http('applyWorkItemFix', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/apply',
   handler: withCors(applyWorkItemFixHandler),
 });
 
 app.http('applyWorkItemBatchFix', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/apply-batch',
   handler: withCors(applyWorkItemBatchFixHandler),
 });
 
 app.http('checkWorkItemDuplicates', {
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   authLevel: 'anonymous',
   route: 'work-items/{id}/duplicates',
   handler: withCors(checkWorkItemDuplicatesHandler),

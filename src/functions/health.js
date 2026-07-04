@@ -2,7 +2,7 @@ import { app } from '@azure/functions';
 import { withCors } from '../utils/cors.js';
 
 app.http('health', {
-  methods: ['GET', 'OPTIONS'],
+  methods: ['GET'],
   authLevel: 'anonymous',
   route: 'health',
   handler: withCors(async () => {
