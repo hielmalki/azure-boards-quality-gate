@@ -1,6 +1,13 @@
 import { DisabledLlmProvider } from './disabled-llm-provider.js';
 import { OpenAiLlmProvider } from './openai-provider.js';
-import { getOpenAiConfig, getSelectedLlmModel, getSelectedLlmProviderId } from './provider-config.js';
+import { AzureOpenAiLlmProvider } from './azure-openai-provider.js';
+import {
+  getAzureOpenAiConfig,
+  getAzureOpenAiDeployment,
+  getOpenAiConfig,
+  getSelectedLlmModel,
+  getSelectedLlmProviderId,
+} from './provider-config.js';
 import { LlmProviderError } from './llm-provider.js';
 
 const PROVIDER_REGISTRY = {
@@ -18,6 +25,14 @@ const PROVIDER_REGISTRY = {
     model: getSelectedLlmModel(),
     async create() {
       return new OpenAiLlmProvider(await getOpenAiConfig());
+    },
+  },
+  'azure-openai': {
+    providerId: 'azure-openai',
+    displayName: 'Azure OpenAI (EU)',
+    model: getAzureOpenAiDeployment(),
+    async create() {
+      return new AzureOpenAiLlmProvider(await getAzureOpenAiConfig());
     },
   },
 };

@@ -25,6 +25,28 @@ export function getTaskPromptAddon(task) {
         'Halte die Überarbeitung auf das Zielfeld und den Befund fokussiert.',
         'Nutze den aktuellen Vorschlag und das Feedback, um den vorgeschlagenen Text zu verbessern, ohne nicht gestützte Details zu erfinden.',
       ];
+    case LLM_TASKS.GENERATE_TEST_CASES:
+      return [
+        'Aufgabe: Leite testbare Testfälle für Unit-/Abnahmetests ausschließlich aus der Beschreibung und den Akzeptanzkriterien des Work Items ab.',
+        'Jeder Testfall braucht einen kurzen Titel, eine Vorbedingung, mindestens einen Schritt mit Aktion und erwartetem Ergebnis, eine Priorität von 1 (hoch) bis 4 (niedrig) und einen Verweis, aus welchem Akzeptanzkriterium er abgeleitet wurde.',
+        'Erzeuge, sofern die Akzeptanzkriterien es nahelegen, auch Negativ- und Randfälle, nicht nur den Erfolgsfall.',
+        'Erfinde keine Vorbedingungen, Systeme oder Daten, die nicht durch den Ticket-Inhalt gestützt sind.',
+        'Wenn ein Akzeptanzkriterium keinen sinnvollen Testfall zulässt, lasse es aus, statt einen unbegründeten Testfall zu erfinden.',
+        'Falls in der Nutzernachricht bereits vorhandene Testfälle als DATEN bereitgestellt werden: Erzeuge NUR neue, ergänzende Testfälle. Dupliziere keinen vorhandenen Testfall – weder im Titel noch im geprüften Szenario (gleiche Aktion+erwartetes Ergebnis zählt als Duplikat, auch bei abweichendem Titel).',
+        'Wenn zusätzlich eine gewünschte Richtung für neue Testfälle als DATEN bereitgestellt wird, MUSS diese Richtung erfüllt werden (z. B. nur Negativfälle, nur Randfälle) – aber weiterhin ausschließlich auf Basis des Ticket-Inhalts, ohne erfundene Details.',
+        'Wenn nach Abzug der vorhandenen Testfälle und unter Berücksichtigung der Richtung kein sinnvoller neuer Testfall mehr existiert, liefere lieber weniger oder gar keine Testfälle als Duplikate.',
+        'Falls eine gewünschte Testfall-Verteilung als DATEN bereitgestellt wird (Anzahl je Testart – Happy Path, Negativfälle, Randfälle): Erzeuge möglichst genau diese Anzahl je Art. Erzwinge keine Testfälle, die der Ticket-Inhalt nicht stützt – decke die Menge dann nur so weit ab, wie es fundiert möglich ist.',
+        'Falls eine gewünschte Schrittanzahl pro Testfall als DATEN bereitgestellt wird, orientiere dich daran (ungefähre Zielgröße, nicht starr), ohne Schritte zu erfinden oder sinnvolle Schritte wegzulassen.',
+      ];
+    case LLM_TASKS.GENERATE_TEST_STEPS:
+      return [
+        'Aufgabe: Ergänze einen BESTEHENDEN Testfall um zusätzliche, sinnvolle Test-Schritte – abgeleitet ausschließlich aus der Beschreibung und den Akzeptanzkriterien des zugehörigen Work Items.',
+        'Der Titel des Testfalls und seine bereits vorhandenen Schritte werden als DATEN bereitgestellt. Erzeuge NUR neue Schritte, die inhaltlich noch nicht abgedeckt sind – keine Wiederholung eines vorhandenen Aktion+Erwartetes-Ergebnis-Paares, auch nicht in anderen Worten.',
+        'Jeder neue Schritt braucht eine klare, ausführbare Aktion und ein konkretes erwartetes Ergebnis.',
+        'Erfinde keine Vorbedingungen, Systeme oder Daten, die nicht durch den Ticket-Inhalt gestützt sind.',
+        'Wenn zusätzlich eine gewünschte Richtung als DATEN bereitgestellt wird, MUSS diese erfüllt werden (z. B. nur Fehlerfälle) – weiterhin ausschließlich auf Basis des Ticket-Inhalts.',
+        'Wenn keine sinnvollen neuen Schritte mehr ergänzt werden können, gib eine leere Liste zurück, statt erfundene oder duplizierte Schritte zu liefern.',
+      ];
     case LLM_TASKS.GENERATE_SUGGESTION:
     default:
       return [

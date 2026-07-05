@@ -126,6 +126,32 @@ export async function generateSuggestionWithLlmStream(
   }
 }
 
+export async function generateTestCasesWithLlm(input, usageContext = {}) {
+  return runLlmTask(
+    'llm.test_cases.generated',
+    'llm.test_cases.generate_failed',
+    provider => provider.generateTestCases(input),
+    {
+      ...usageContext,
+      action: 'generate_test_cases',
+      issueKey: input?.issueKey ?? null,
+    }
+  );
+}
+
+export async function generateTestStepsWithLlm(input, usageContext = {}) {
+  return runLlmTask(
+    'llm.test_steps.generated',
+    'llm.test_steps.generate_failed',
+    provider => provider.generateTestSteps(input),
+    {
+      ...usageContext,
+      action: 'generate_test_steps',
+      issueKey: input?.issueKey ?? null,
+    }
+  );
+}
+
 export async function reviseSuggestionWithLlm(input, usageContext = {}) {
   return runLlmTask(
     'llm.suggestion.revised',

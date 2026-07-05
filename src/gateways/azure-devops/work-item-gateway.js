@@ -17,6 +17,14 @@ import { getAuthContext } from '../../auth/auth-context.js';
 const API_VERSION = '7.1';
 
 export const ACCEPTANCE_CRITERIA_FIELD_KEY = 'Microsoft.VSTS.Common.AcceptanceCriteria';
+export const STEPS_FIELD_KEY = 'Microsoft.VSTS.TCM.Steps';
+// ForwardName "Tested By" / ReverseName "Tests" (siehe ADO Link-Type-Referenz).
+// Auf dem NEU angelegten Test Case setzen wir die Relation zur Story als
+// -Reverse ("Tests"); ADO legt automatisch die reziproke -Forward-Relation
+// ("Tested By") auf der Story an – genau die liest fetchLinkedTestCases weiter
+// unten wieder aus.
+export const TESTED_BY_REVERSE_REL = 'Microsoft.VSTS.Common.TestedBy-Reverse';
+export const TESTED_BY_FORWARD_REL = 'Microsoft.VSTS.Common.TestedBy-Forward';
 
 const WORK_ITEM_READ_FIELDS = [
   'System.Title',
@@ -218,6 +226,227 @@ export async function updateIssueFields(workItemId, fields, { fetchFn = globalTh
     const responseBody = await response.text().catch(() => null);
     throw new Error(
       `Failed to update Azure DevOps work item ${workItemId}: ${response.status} ${response.statusText}${
+        responseBody ? ` - ${responseBody}` : ''
+      }`
+    );
+  }
+}
+
+export async function createTestCaseWorkItem(
+  { storyId, title, stepsXml, description },
+  { fetchFn = globalThis.fetch } = {}
+) {
+  const config = getAzureDevOpsConfig();
+  const url = buildWorkItemUrl(config, `workitems/${encodeURIComponent('$Test Case')}`);
+
+  const patchDocument = [
+    { op: 'add', path: '/fields/System.Title', value: title },
+    { op: 'add', path: `/fields/${STEPS_FIELD_KEY}`, value: stepsXml },
+  ];
+
+  if (description) {
+    patchDocument.push({ op: 'add', path: '/fields/System.Description', value: description });
+  }
+
+  if (storyId) {
+    patchDocument.push({
+      op: 'add',
+      path: '/relations/-',
+      value: {
+        rel: TESTED_BY_REVERSE_REL,
+        url: `${config.organizationUrl}/_apis/wit/workItems/${storyId}`,
+      },
+    });
+  }
+
+  const response = await fetchFn(url, {
+    method: 'POST',
+    headers: {
+      Authorization: buildAuthHeader(config),
+      'Content-Type': 'application/json-patch+json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(patchDocument),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => null);
+    throw new Error(
+      `Failed to create Azure DevOps test case work item: ${response.status} ${response.statusText}${
+        responseBody ? ` - ${responseBody}` : ''
+      }`
+    );
+  }
+
+  const createdWorkItem = await response.json();
+  return {
+    id: createdWorkItem?.id != null ? String(createdWorkItem.id) : null,
+    title: createdWorkItem?.fields?.['System.Title'] ?? title,
+  };
+}
+
+function unescapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function stripHtmlTags(text) {
+  return String(text ?? '').replace(/<[^>]*>/g, '').trim();
+}
+
+// Umkehrung von buildStepsXml – best effort, da manuell in ADO angelegte Test
+// Cases vom generierten Format abweichen können (anderes Markup, zusätzliche
+// Attribute). Scheitert das Parsen, liefert die Funktion [] statt zu werfen,
+// damit die Erkennung vorhandener Testfälle (Titel bleibt das Hauptsignal)
+// dadurch nie fehlschlägt.
+export function parseStepsXml(stepsXml) {
+  if (typeof stepsXml !== 'string' || !stepsXml.trim()) {
+    return [];
+  }
+
+  try {
+    const stepBlocks = stepsXml.match(/<step\b[^>]*>[\s\S]*?<\/step>/g) ?? [];
+
+    return stepBlocks.map(stepBlock => {
+      const paramMatches = [
+        ...stepBlock.matchAll(/<parameterizedString[^>]*>([\s\S]*?)<\/parameterizedString>/g),
+      ];
+      const action = paramMatches[0] ? unescapeHtml(stripHtmlTags(paramMatches[0][1])) : '';
+      const expected = paramMatches[1] ? unescapeHtml(stripHtmlTags(paramMatches[1][1])) : '';
+      return { action, expected };
+    });
+  } catch {
+    return [];
+  }
+}
+
+// Liest Test-Case-Work-Items, die per "Tested By"-Relation mit der Story
+// verknüpft sind – egal ob sie über createTestCaseWorkItem (dieses Tool) oder
+// manuell in Azure DevOps angelegt wurden. fetchIssueForAnalysis fordert
+// bewusst keine Relations an (kleinerer Payload für den Analyse-Pfad), daher
+// ein eigener, gezielter Request mit $expand=relations. Wichtig: Von der Story
+// aus gesehen heißt die Relation "Tested By" und trägt den -Forward-rel-Wert
+// (nicht -Reverse – der gilt nur auf der Seite des Test Case, siehe
+// TESTED_BY_REVERSE_REL oben).
+export async function fetchLinkedTestCases({ workItemId }, { fetchFn = globalThis.fetch } = {}) {
+  const config = getAzureDevOpsConfig();
+  const url = buildWorkItemUrl(config, `workitems/${encodeURIComponent(workItemId)}`, {
+    '$expand': 'relations',
+  });
+
+  const response = await fetchFn(url, {
+    headers: {
+      Authorization: buildAuthHeader(config),
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load Azure DevOps work item relations ${workItemId}: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const workItem = await response.json();
+  const relations = Array.isArray(workItem?.relations) ? workItem.relations : [];
+  const testCaseIds = relations
+    .filter(relation => relation?.rel === TESTED_BY_FORWARD_REL)
+    .map(relation => {
+      const match = typeof relation?.url === 'string' ? relation.url.match(/\/(\d+)$/) : null;
+      return match ? match[1] : null;
+    })
+    .filter(Boolean);
+
+  if (testCaseIds.length === 0) {
+    return [];
+  }
+
+  const batchUrl = buildWorkItemUrl(config, 'workitems', {
+    ids: testCaseIds.join(','),
+    fields: ['System.Title', STEPS_FIELD_KEY, 'System.State'].join(','),
+  });
+
+  const batchResponse = await fetchFn(batchUrl, {
+    headers: {
+      Authorization: buildAuthHeader(config),
+      Accept: 'application/json',
+    },
+  });
+
+  if (!batchResponse.ok) {
+    throw new Error(
+      `Azure DevOps batch test case read failed: ${batchResponse.status} ${batchResponse.statusText}`
+    );
+  }
+
+  const batchData = await batchResponse.json();
+  const items = Array.isArray(batchData.value) ? batchData.value : [];
+
+  return items.map(item => ({
+    id: String(item.id),
+    title: item.fields?.['System.Title'] ?? '',
+    state: item.fields?.['System.State'] ?? '',
+    steps: parseStepsXml(item.fields?.[STEPS_FIELD_KEY]),
+  }));
+}
+
+// Liest Titel + Steps EINES Test-Case-Work-Items per ID. Genutzt vom
+// "Steps ergänzen"-Weg (Phase 2), um unmittelbar vor dem Zurückschreiben einen
+// frischen Stand zu holen – Read-Merge-Serialize statt auf einen möglicherweise
+// veralteten Client-Zustand zu vertrauen (ADO speichert Steps als EIN XML-Blob,
+// ein Patch kann keinen einzelnen <step> anhängen).
+export async function fetchTestCaseSteps(testCaseId, { fetchFn = globalThis.fetch } = {}) {
+  const config = getAzureDevOpsConfig();
+  const url = buildWorkItemUrl(config, `workitems/${encodeURIComponent(testCaseId)}`, {
+    fields: ['System.Title', STEPS_FIELD_KEY].join(','),
+  });
+
+  const response = await fetchFn(url, {
+    headers: {
+      Authorization: buildAuthHeader(config),
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load Azure DevOps test case ${testCaseId}: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const workItem = await response.json();
+  return {
+    id: String(testCaseId),
+    title: workItem?.fields?.['System.Title'] ?? '',
+    steps: parseStepsXml(workItem?.fields?.[STEPS_FIELD_KEY]),
+  };
+}
+
+// Schreibt das komplette Steps-Feld eines bestehenden Test-Case-Work-Items.
+// Erwartet die bereits zusammengeführte (vorhandene + neue) Steps-XML – ADO
+// kennt kein Anhängen einzelner Schritte, nur ein Ersetzen des gesamten Feldes.
+export async function updateTestCaseSteps(testCaseId, stepsXml, { fetchFn = globalThis.fetch } = {}) {
+  const config = getAzureDevOpsConfig();
+  const url = buildWorkItemUrl(config, `workitems/${encodeURIComponent(testCaseId)}`);
+
+  const patchDocument = [{ op: 'add', path: `/fields/${STEPS_FIELD_KEY}`, value: stepsXml }];
+
+  const response = await fetchFn(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: buildAuthHeader(config),
+      'Content-Type': 'application/json-patch+json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(patchDocument),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => null);
+    throw new Error(
+      `Failed to update Azure DevOps test case steps ${testCaseId}: ${response.status} ${response.statusText}${
         responseBody ? ` - ${responseBody}` : ''
       }`
     );

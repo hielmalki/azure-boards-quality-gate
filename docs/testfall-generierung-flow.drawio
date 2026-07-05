@@ -1,0 +1,289 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram name="Testfall-Generierung Flow" id="testcase-flow-1">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===================== TITLE ===================== -->
+        <mxCell id="title" value="QualityGate AI · Geführte Testfall-Generierung" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1f3a5f;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Vom Klick auf „Testfälle generieren“ zum passenden Ergebnis – der Dialog passt sich dem Kontext der User Story an." style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="900" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== FLOW COLUMN ===================== -->
+        <mxCell id="S" value="▶  Klick: „Testfälle generieren“" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="290" y="110" width="280" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d1" value="Akzeptanz-\nkriterien\nvorhanden?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="355" y="195" width="150" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z1" value="⚠  Zustand 1&#10;Akzeptanzkriterien fehlen&#10;→ Hinweis + Fix-Button" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="215" width="230" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d2" value="Bereits&#10;Test Cases&#10;verknüpft?&#10;(„Tested By“)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="355" y="345" width="150" height="105" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z3" value="🧪  Zustand 3&#10;Neue Testfälle konfigurieren" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="510" width="220" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z2hub" value="📋  Zustand 2&#10;Test Cases vorhanden – was tun?" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="500" width="240" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z2a" value="A · Neue Testfälle\nmit Richtung/Fokus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1ecfb;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="480" y="600" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z2b" value="B · Steps zu bestehenden\nTestfällen ergänzen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1ecfb;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="670" y="600" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="prev" value="👁  Vorschau – editierbare Testfälle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="705" width="280" height="54" as="geometry" />
+        </mxCell>
+
+        <mxCell id="wb" value="In Azure DevOps übernehmen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef6ec;strokeColor=#82b366;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="805" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="wbA" value="Als Test Case anlegen" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#1f3a5f;strokeColor=none;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="298" y="845" width="150" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="wbB" value="An Story anhängen" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b3b3b3;fontColor=#444444;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="458" y="845" width="130" height="38" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== FLOW EDGES ===================== -->
+        <mxCell id="eS1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="S" target="d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1z1" value="nein" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=1.5;endArrow=block;fontColor=#b85450;fontStyle=1;" edge="1" parent="1" source="d1" target="z1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1d2" value="ja" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;fontColor=#2d6a2d;fontStyle=1;" edge="1" parent="1" source="d1" target="d2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eloop" value="nach Fix → erneut prüfen" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;strokeColor=#b85450;strokeWidth=1.5;endArrow=block;fontColor=#b85450;fontSize=10;" edge="1" parent="1" source="z1" target="d1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="150" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="155" y="170" />
+              <mxPoint x="380" y="170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2z3" value="nein" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;fontColor=#2d6a2d;fontStyle=1;" edge="1" parent="1" source="d2" target="z3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2hub" value="ja" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;fontColor=#2d6a2d;fontStyle=1;" edge="1" parent="1" source="d2" target="z2hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehubA" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="z2hub" target="z2a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehubB" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="z2hub" target="z2b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez3p" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="z3" target="prev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ezaP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="z2a" target="prev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ezbP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="z2b" target="prev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="epwb" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4d4d4d;strokeWidth=1.5;endArrow=block;" edge="1" parent="1" source="prev" target="wb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== WIREFRAME 1 (AK fehlt) ===================== -->
+        <mxCell id="wf1" value="⚠  Zustand 1 · Akzeptanzkriterien fehlen" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="960" y="110" width="440" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="wf1txt" value="Ohne Akzeptanzkriterien lassen sich keine fundierten Testfälle ableiten. Bitte zuerst die AK der User Story ergänzen." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;fontColor=#444444;" vertex="1" parent="1">
+          <mxGeometry x="978" y="148" width="404" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="wf1btn" value="✨  Mit Basic-Regelset beheben (Fix)" style="rounded=1;arcSize=40;html=1;fillColor=#e8f0fe;strokeColor=#4a86e8;fontColor=#1a56db;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="978" y="200" width="250" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="wf1note" value="erzeugt AK-Vorschlag →&#10;danach zurück zum Start" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#999999;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="200" width="150" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== WIREFRAME 3 (Neu-Konfig) ===================== -->
+        <mxCell id="wf3" value="🧪  Zustand 3 · Neue Testfälle konfigurieren" style="rounded=1;arcSize=3;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1f3a5f;" vertex="1" parent="1">
+          <mxGeometry x="960" y="300" width="470" height="345" as="geometry" />
+        </mxCell>
+        <mxCell id="wf3lbl" value="Testfall-Typen &amp; Anzahl je Typ:" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="978" y="336" width="300" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="hp" value="☑  Happy Path" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="988" y="362" width="220" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="hpc" value="2" style="rounded=1;arcSize=20;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="360" width="54" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="neg" value="☑  Negativfälle" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="988" y="392" width="220" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="negc" value="3" style="rounded=1;arcSize=20;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="390" width="54" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="rand" value="☑  Randfälle" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="988" y="422" width="220" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="randc" value="2" style="rounded=1;arcSize=20;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="420" width="54" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="div1" value="" style="line;strokeColor=#e6e6e6;strokeWidth=1;html=1;" vertex="1" parent="1">
+          <mxGeometry x="978" y="452" width="406" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="steplbl" value="Schritte pro Testfall:" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="978" y="464" width="180" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="slider" value="●━━━━━○" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="464" width="150" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="stepc" value="4" style="rounded=1;arcSize=20;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="463" width="54" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="anmlbl" value="Anmerkung an die KI (optional):" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="978" y="498" width="300" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="anmfield" value="z. B. „Fokus auf Zahlungslimits &amp; Sonderzeichen in IBAN“" style="rounded=1;arcSize=10;html=1;fillColor=#f9f9f9;strokeColor=#b3b3b3;fontSize=11;fontColor=#999999;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="978" y="522" width="406" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="genbtn" value="Testfälle generieren" style="rounded=1;arcSize=40;html=1;fillColor=#1f3a5f;strokeColor=none;fontColor=#ffffff;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="978" y="578" width="200" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="genhint" value="→ danach editierbare Vorschau" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#999999;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1194" y="578" width="190" height="38" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== WIREFRAME 2 (Test Cases vorhanden) ===================== -->
+        <mxCell id="wf2" value="📋  Zustand 2 · 3 Test Cases bereits verknüpft" style="rounded=1;arcSize=3;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1f3a5f;" vertex="1" parent="1">
+          <mxGeometry x="960" y="685" width="470" height="355" as="geometry" />
+        </mxCell>
+
+        <!-- Panel A -->
+        <mxCell id="wf2a" value="A · Neue Testfälle ergänzen" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f7faff;strokeColor=#9db8de;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#2b527d;" vertex="1" parent="1">
+          <mxGeometry x="974" y="722" width="222" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="a_lbl" value="Richtung / Fokus:" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="986" y="754" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a_field" value="z. B. nur Fehlerfälle &amp; Timeouts, keine Wiederholung vorhandener" style="rounded=1;arcSize=10;html=1;fillColor=#ffffff;strokeColor=#b3b3b3;fontSize=10;fontColor=#999999;align=left;spacingLeft=6;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="986" y="776" width="198" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="a_typlbl" value="Typen &amp; Anzahl:" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="986" y="834" width="198" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a_neg" value="☑  Negativfälle           [ 3 ]" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="986" y="856" width="198" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a_rand" value="☑  Randfälle              [ 2 ]" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="986" y="880" width="198" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a_note" value="Bestehende Testfälle gehen als Kontext an die KI → keine Duplikate." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#8a8a8a;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="986" y="906" width="198" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="a_btn" value="Neue Testfälle generieren" style="rounded=1;arcSize=40;html=1;fillColor=#1f3a5f;strokeColor=none;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="986" y="944" width="198" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Panel B -->
+        <mxCell id="wf2b" value="B · Steps zu bestehenden ergänzen" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f7faff;strokeColor=#9db8de;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#2b527d;" vertex="1" parent="1">
+          <mxGeometry x="1206" y="722" width="210" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="b_lbl" value="Bestehende Testfälle auswählen:" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="754" width="192" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="b_tc1" value="☑  TC-501 · Login gültig" style="rounded=1;arcSize=8;html=1;fillColor=#eef4ff;strokeColor=#c9d9f2;align=left;spacingLeft=6;fontSize=10;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="778" width="192" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="b_tc2" value="☐  TC-502 · Login gesperrt" style="rounded=1;arcSize=8;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;align=left;spacingLeft=6;fontSize=10;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="808" width="192" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="b_tc3" value="☑  TC-503 · Passwort-Reset" style="rounded=1;arcSize=8;html=1;fillColor=#eef4ff;strokeColor=#c9d9f2;align=left;spacingLeft=6;fontSize=10;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="838" width="192" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="b_anmlbl" value="Anmerkung an KI:" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="870" width="192" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="b_field" value="z. B. „fehlende Validierungs-Schritte“" style="rounded=1;arcSize=10;html=1;fillColor=#ffffff;strokeColor=#b3b3b3;fontSize=10;fontColor=#999999;align=left;spacingLeft=6;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="892" width="192" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b_hint" value="ausgewählte Testfälle werden mit ihren Schritten ins Formular geladen." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#8a8a8a;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="906" width="192" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="b_btn" value="Steps generieren" style="rounded=1;arcSize=40;html=1;fillColor=#1f3a5f;strokeColor=none;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1216" y="944" width="192" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== DETAIL LINKS (Flow → Wireframe) ===================== -->
+        <mxCell id="dl1" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=1.5;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="z1" target="wf1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dl3" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=1.5;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.3;" edge="1" parent="1" source="z3" target="wf3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dl2" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=1.5;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.1;" edge="1" parent="1" source="z2hub" target="wf2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== LEGEND ===================== -->
+        <mxCell id="leg" value="Legende" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fbfbfb;strokeColor=#cccccc;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="940" width="700" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="" style="rounded=1;arcSize=50;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="972" width="26" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1t" value="Start / Ende" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="92" y="972" width="110" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="" style="rhombus;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="220" y="971" width="28" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2t" value="Entscheidung" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="254" y="972" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="972" width="26" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3t" value="Aktion / Zustand" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="432" y="972" width="140" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="" style="rounded=1;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1004" width="26" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4t" value="Hinweis / Blocker" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="92" y="1004" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="" style="rounded=1;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="220" y="1004" width="28" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5t" value="UI-Formular (Wireframe)" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="254" y="1004" width="150" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=2;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="1013" as="sourcePoint" />
+            <mxPoint x="426" y="1013" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lg6t" value="Formular-Zuordnung" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="432" y="1004" width="150" height="18" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

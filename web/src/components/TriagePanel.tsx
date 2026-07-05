@@ -17,6 +17,7 @@ import { useFixApplyFlow } from './triage-panel/use-fix-apply-flow';
 import { useAnalysisResultSynchronization } from './triage-panel/use-analysis-result-synchronization';
 import { HeaderActions } from './triage-panel/header-actions';
 import { DuplicateSection } from './triage-panel/duplicate-section';
+import { TestCaseSection } from './triage-panel/test-case-section';
 import { useDuplicateCheck } from '../hooks/useDuplicateCheck';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
@@ -418,6 +419,19 @@ export function TriagePanel({ isFirstTime = false, onFirstTimeComplete, onOpenAp
               error={duplicateCheckError}
               skipped={duplicateCheckSkipped}
               hasCompleted={duplicateCheckCompleted}
+            />
+          )}
+
+          {/* UI: KI-generierte Testfälle aus Beschreibung + Akzeptanzkriterien */}
+          {currentIssueKey && (
+            <TestCaseSection
+              issueKey={currentIssueKey}
+              onTokenUsageChanged={refreshTokenUsage}
+              acceptanceCriteriaFinding={analysisResult?.findings?.critical?.find(
+                finding => finding.id === 'acceptance_criteria_missing'
+              )}
+              issueContext={analysisResult?.issue}
+              onAcceptanceCriteriaApplied={runPostApplyReanalysis}
             />
           )}
       </AnalysisStage>

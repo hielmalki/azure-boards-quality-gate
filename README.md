@@ -14,6 +14,8 @@ kein `manifest.yml` mehr — stattdessen Azure-Functions-HTTP-Endpunkte, das ADO
   Zielarchitektur, Schicht-für-Schicht-Analyse, empfohlene Umsetzungsreihenfolge (7 Schritte).
 - [`docs/azure-boards-migration-umsetzung.md`](docs/azure-boards-migration-umsetzung.md) —
   Einsteiger-Kochrezept (wer macht was, Azure-Ressourcen-Setup).
+- [`docs/testfall-generierung.md`](docs/testfall-generierung.md) — wie das Quality Gate
+  aus Beschreibung + Akzeptanzkriterien Testfälle generiert und als Azure-Test-Case-Work-Items anlegt.
 
 ## Stand der Migration
 
@@ -87,8 +89,14 @@ des PAT (siehe `src/auth/`, Schritt 3).
 
 | Variable | Zweck |
 | --- | --- |
-| `LLM_PROVIDER` | `openai` oder `disabled` |
+| `LLM_PROVIDER` | `openai`, `azure-openai` oder `disabled` |
 | `OPENAI_API_KEY` | OpenAI-API-Key als letzter Fallback (falls weder Key Vault noch Table Storage einen Wert liefern) |
+| `AZURE_OPENAI_ENDPOINT` | Nur bei `LLM_PROVIDER=azure-openai`: Azure-OpenAI-Ressourcen-Endpoint (z. B. EU-Region), z. B. `https://qualitygate-eu.openai.azure.com` |
+| `AZURE_OPENAI_DEPLOYMENT` | Nur bei `LLM_PROVIDER=azure-openai`: Name des Modell-Deployments |
+| `AZURE_OPENAI_API_VERSION` | Nur bei `LLM_PROVIDER=azure-openai`: API-Version (Default `2024-08-01-preview`) |
+
+Auth gegen Azure OpenAI läuft über `DefaultAzureCredential` (Managed Identity), kein API-Key
+nötig — siehe [`docs/testfall-generierung.md`](docs/testfall-generierung.md#wohin-gehen-die-daten-datenschutz).
 
 ### Umgebungsvariablen (für die OpenAI-Key-Härtung / Azure Key Vault)
 

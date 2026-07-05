@@ -46,6 +46,16 @@ export class DisabledLlmProvider extends LlmProvider {
     this.assertSupportedTask(LLM_TASKS.REVISE_SUGGESTION);
     return buildUnavailableResult(this, LLM_TASKS.REVISE_SUGGESTION, input);
   }
+
+  async generateTestCases(input) {
+    this.assertSupportedTask(LLM_TASKS.GENERATE_TEST_CASES);
+    return buildUnavailableResult(this, LLM_TASKS.GENERATE_TEST_CASES, input);
+  }
+
+  async generateTestSteps(input) {
+    this.assertSupportedTask(LLM_TASKS.GENERATE_TEST_STEPS);
+    return buildUnavailableResult(this, LLM_TASKS.GENERATE_TEST_STEPS, input);
+  }
 }
 
 export function assertConfiguredProvider(providerId) {

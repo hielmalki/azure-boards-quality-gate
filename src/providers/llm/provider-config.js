@@ -18,6 +18,41 @@ function parseNumber(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+export function getAzureOpenAiEndpoint() {
+  return process.env.AZURE_OPENAI_ENDPOINT ?? null;
+}
+
+export function getAzureOpenAiDeployment() {
+  return process.env.AZURE_OPENAI_DEPLOYMENT ?? null;
+}
+
+export function getAzureOpenAiApiVersion() {
+  return process.env.AZURE_OPENAI_API_VERSION ?? '2024-08-01-preview';
+}
+
+export async function getAzureOpenAiConfig() {
+  // Managed Identity statt API-Key: Auth läuft über DefaultAzureCredential im
+  // selben Azure-Tenant (siehe src/repositories/key-vault-store.js für dasselbe
+  // Muster), damit Ticket-Inhalte die EU-Region nicht verlassen.
+  const { DefaultAzureCredential, getBearerTokenProvider } = await import('@azure/identity');
+  const tokenProvider = getBearerTokenProvider(
+    new DefaultAzureCredential(),
+    'https://cognitiveservices.azure.com/.default'
+  );
+
+  const configuredTimeoutMs = parseNumber(process.env.LLM_TIMEOUT_MS, 20000);
+  const safeForgeTimeoutCapMs = 18000;
+
+  return {
+    endpoint: getAzureOpenAiEndpoint(),
+    deployment: getAzureOpenAiDeployment(),
+    apiVersion: getAzureOpenAiApiVersion(),
+    timeoutMs: Math.min(configuredTimeoutMs, safeForgeTimeoutCapMs),
+    maxOutputTokens: parseNumber(process.env.LLM_MAX_OUTPUT_TOKENS, 1200),
+    getAccessToken: tokenProvider,
+  };
+}
+
 export async function getOpenAiConfig() {
   // KVS-gespeicherter Schlüssel hat Vorrang vor der Umgebungsvariable, damit Admins
   // den Schlüssel über die UI aktualisieren können, ohne redeployen zu müssen.

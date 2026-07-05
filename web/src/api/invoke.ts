@@ -167,6 +167,42 @@ const ROUTES: Record<string, (payload: InvokePayload) => RequestSpec> = {
   }),
   deleteOpenAiApiKey: () => ({ method: 'DELETE', path: '/api-key' }),
   getTokenUsage: () => ({ method: 'GET', path: '/usage' }),
+  listTestCases: payload => ({
+    method: 'GET',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases`,
+  }),
+  generateTestCases: payload => ({
+    method: 'POST',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases`,
+    body: {
+      instruction: payload?.['instruction'] ?? null,
+      config: payload?.['config'] ?? null,
+    },
+  }),
+  createTestCaseWorkItems: payload => ({
+    method: 'POST',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases/create`,
+    body: { testCases: payload?.['testCases'] },
+  }),
+  attachTestCases: payload => ({
+    method: 'POST',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases/attach`,
+    body: { testCases: payload?.['testCases'] },
+  }),
+  generateTestSteps: payload => ({
+    method: 'POST',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases/${payload?.['testCaseId']}/steps`,
+    body: {
+      testCaseTitle: payload?.['testCaseTitle'] ?? null,
+      existingSteps: payload?.['existingSteps'] ?? [],
+      instruction: payload?.['instruction'] ?? null,
+    },
+  }),
+  applyTestSteps: payload => ({
+    method: 'POST',
+    path: `/work-items/${resolveWorkItemId(payload)}/test-cases/${payload?.['testCaseId']}/steps/apply`,
+    body: { newSteps: payload?.['newSteps'] ?? [] },
+  }),
 };
 
 type BackendError = Error & { code?: string };

@@ -141,6 +141,106 @@ export type BackendAnalysisProgress = {
   updatedAt?: string;
 };
 
+export type TestCaseStep = {
+  action: string;
+  expected: string;
+};
+
+export type TestCase = {
+  title: string;
+  preconditions: string;
+  steps: TestCaseStep[];
+  priority: number;
+  derivedFrom: string | null;
+};
+
+export type GenerateTestCasesResponse = {
+  issueKey: string;
+  testCases: TestCase[];
+  existingCount?: number;
+};
+
+export type ExistingTestCase = {
+  id: string;
+  title: string;
+  state: string;
+  steps: TestCaseStep[];
+};
+
+// Vom Nutzer im geführten Formular gewählte Steuerung der Generierung.
+export type TestCaseTypeKey = 'happyPath' | 'negative' | 'edge';
+
+export type TestCaseTypeConfig = {
+  enabled: boolean;
+  count: number;
+};
+
+export type TestCaseGenerationConfig = {
+  types: Record<TestCaseTypeKey, TestCaseTypeConfig>;
+  stepsPerCase: number;
+};
+
+export const TEST_CASE_TYPE_ORDER: TestCaseTypeKey[] = ['happyPath', 'negative', 'edge'];
+
+export const TEST_CASE_TYPE_LABELS: Record<TestCaseTypeKey, string> = {
+  happyPath: 'Happy Path',
+  negative: 'Negativfälle',
+  edge: 'Randfälle',
+};
+
+export const DEFAULT_TEST_CASE_CONFIG: TestCaseGenerationConfig = {
+  types: {
+    happyPath: { enabled: true, count: 2 },
+    negative: { enabled: true, count: 2 },
+    edge: { enabled: false, count: 1 },
+  },
+  stepsPerCase: 4,
+};
+
+export function countConfiguredTestCases(config: TestCaseGenerationConfig): number {
+  return TEST_CASE_TYPE_ORDER.reduce((total, key) => {
+    const type = config.types[key];
+    return type.enabled ? total + Math.max(0, type.count) : total;
+  }, 0);
+}
+
+export type ListTestCasesResponse = {
+  issueKey: string;
+  existingTestCases: ExistingTestCase[];
+  count: number;
+};
+
+// Weg B (Steps ergänzen): zusätzliche Schritte für einen bestehenden Test Case
+// generieren (Vorschau) und anschließend zusammengeführt zurückschreiben.
+export type GenerateTestStepsResponse = {
+  issueKey: string;
+  testCaseId: string;
+  newSteps: TestCaseStep[];
+};
+
+export type ApplyTestStepsResponse = {
+  testCaseId: string;
+  stepCount: number;
+  status: 'completed';
+};
+
+export type CreateTestCaseWorkItemsResponse = {
+  issueKey: string;
+  results: Array<{
+    status: 'completed' | 'failed';
+    title: string;
+    testCaseId: string | null;
+    error: { code: string; message: string } | null;
+  }>;
+  summary: { requested: number; succeeded: number; failed: number };
+};
+
+export type AttachTestCasesResponse = {
+  issueKey: string;
+  status: 'completed';
+  attachedCount: number;
+};
+
 export const BASE_SCORE = 42;
 
 const FIXED_CURRENT_STATE_TEXT: Partial<Record<string, string>> = {

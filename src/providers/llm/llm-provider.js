@@ -58,4 +58,16 @@ export class LlmProvider {
       providerId: this.providerId,
     });
   }
+
+  async generateTestCases(_input) {
+    throw new LlmProviderError('generateTestCases() must be implemented by the concrete provider.', {
+      providerId: this.providerId,
+    });
+  }
+
+  async generateTestSteps(_input) {
+    throw new LlmProviderError('generateTestSteps() must be implemented by the concrete provider.', {
+      providerId: this.providerId,
+    });
+  }
 }
