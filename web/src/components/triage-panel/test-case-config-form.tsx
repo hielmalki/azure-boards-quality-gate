@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Info, Loader2, Sparkles } from 'lucide-react';
+import { Stepper } from './stepper';
 import {
   TEST_CASE_TYPE_LABELS,
   TEST_CASE_TYPE_ORDER,
@@ -66,18 +67,15 @@ export function TestCaseConfigForm({
     }));
   };
 
-  const setSteps = (rawValue: string) => {
-    const parsed = Number(rawValue);
-    const stepsPerCase = Number.isFinite(parsed)
-      ? Math.min(MAX_STEPS, Math.max(MIN_STEPS, Math.round(parsed)))
-      : defaultConfig.stepsPerCase;
+  const setSteps = (value: number) => {
+    const stepsPerCase = Math.min(MAX_STEPS, Math.max(MIN_STEPS, Math.round(value)));
     setConfig(current => ({ ...current, stepsPerCase }));
   };
 
   return (
     <div className="px-4 py-3 space-y-3">
       {hasExisting && (
-        <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2.5">
+        <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] p-3">
           <Info size={12} className="mt-0.5 shrink-0" />
           <div>
             <p className="font-medium">
@@ -97,35 +95,28 @@ export function TestCaseConfigForm({
         </div>
       )}
 
-      <fieldset className="space-y-1.5">
+      <fieldset className="space-y-2">
         <legend className="text-xs font-medium text-gray-700 mb-1">Testfall-Typen &amp; Anzahl je Typ</legend>
         {TEST_CASE_TYPE_ORDER.map(key => {
           const type = config.types[key];
-          const countId = `${fieldId}-count-${key}`;
           return (
-            <div key={key} className="flex items-center gap-2">
+            <div key={key} className="flex items-center justify-between gap-2">
               <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={type.enabled}
                   onChange={event => toggleType(key, event.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-gray-300 accent-blue-600"
+                  className="h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200]"
                 />
                 <span className="text-sm text-gray-800">{TEST_CASE_TYPE_LABELS[key]}</span>
                 <span className="text-[11px] text-gray-400 truncate">{TYPE_HINTS[key]}</span>
               </label>
-              <label htmlFor={countId} className="sr-only">
-                Anzahl {TEST_CASE_TYPE_LABELS[key]}
-              </label>
-              <input
-                id={countId}
-                type="number"
+              <Stepper
+                value={type.count}
+                onChange={value => setCount(key, String(value))}
                 min={0}
                 max={MAX_COUNT}
-                value={type.enabled ? type.count : ''}
                 disabled={!type.enabled}
-                onChange={event => setCount(key, event.target.value)}
-                className="w-14 px-2 py-1 border border-gray-200 rounded-[6px] text-sm text-gray-800 text-center outline-none focus:border-blue-400 transition-colors disabled:bg-gray-50 disabled:text-gray-300"
               />
             </div>
           );
@@ -133,18 +124,8 @@ export function TestCaseConfigForm({
       </fieldset>
 
       <div className="flex items-center justify-between gap-2 pt-1">
-        <label htmlFor={`${fieldId}-steps`} className="text-xs font-medium text-gray-700">
-          Schritte pro Testfall
-        </label>
-        <input
-          id={`${fieldId}-steps`}
-          type="number"
-          min={MIN_STEPS}
-          max={MAX_STEPS}
-          value={config.stepsPerCase}
-          onChange={event => setSteps(event.target.value)}
-          className="w-14 px-2 py-1 border border-gray-200 rounded-[6px] text-sm text-gray-800 text-center outline-none focus:border-blue-400 transition-colors"
-        />
+        <label className="text-xs font-medium text-gray-700">Schritte pro Testfall</label>
+        <Stepper value={config.stepsPerCase} onChange={setSteps} min={MIN_STEPS} max={MAX_STEPS} />
       </div>
 
       <div>
@@ -175,7 +156,7 @@ export function TestCaseConfigForm({
         <button
           onClick={() => onGenerate(config, instruction)}
           disabled={!canGenerate}
-          className="flex items-center gap-1.5 h-[34px] px-3 bg-gray-900 text-white text-xs rounded-[8px] hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 h-[34px] px-3 bg-[#FF6200] hover:bg-[#E55800] text-white text-xs rounded-[8px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           Testfälle generieren

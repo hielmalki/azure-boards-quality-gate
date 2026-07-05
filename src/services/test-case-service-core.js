@@ -22,6 +22,14 @@ function normalizePriority(priority) {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 4 ? parsed : DEFAULT_PRIORITY;
 }
 
+const VALID_TEST_CASE_TYPES = new Set(['happyPath', 'negative', 'edge']);
+
+// Toleranter Fallback auf null statt eines Defaults: ein fehlender/unbekannter
+// Typ soll im Frontend zu "kein Badge" führen statt einen falschen Typ vorzutäuschen.
+function normalizeTestCaseType(type) {
+  return VALID_TEST_CASE_TYPES.has(type) ? type : null;
+}
+
 function buildIssueContext(issue) {
   return {
     title: issue?.summary ?? null,
@@ -151,6 +159,7 @@ export function mapTestCasesResult({ llmResult }) {
       : [],
     priority: normalizePriority(testCase.priority),
     derivedFrom: (testCase.derivedFrom ?? '').trim() || null,
+    type: normalizeTestCaseType(testCase.type),
   }));
 }
 

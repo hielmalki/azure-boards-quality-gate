@@ -28,7 +28,7 @@ export function getTaskPromptAddon(task) {
     case LLM_TASKS.GENERATE_TEST_CASES:
       return [
         'Aufgabe: Leite testbare Testfälle für Unit-/Abnahmetests ausschließlich aus der Beschreibung und den Akzeptanzkriterien des Work Items ab.',
-        'Jeder Testfall braucht einen kurzen Titel, eine Vorbedingung, mindestens einen Schritt mit Aktion und erwartetem Ergebnis, eine Priorität von 1 (hoch) bis 4 (niedrig) und einen Verweis, aus welchem Akzeptanzkriterium er abgeleitet wurde.',
+        'Jeder Testfall braucht einen kurzen Titel, eine Vorbedingung, mindestens einen Schritt mit Aktion und erwartetem Ergebnis, eine Priorität von 1 (hoch) bis 4 (niedrig), einen Verweis, aus welchem Akzeptanzkriterium er abgeleitet wurde, und einen Typ: happyPath (Erfolgs-/Positivfall), negative (Negativfall/Fehlerfall) oder edge (Randfall/Grenzwert) – je nachdem, welches Szenario der Testfall tatsächlich prüft.',
         'Erzeuge, sofern die Akzeptanzkriterien es nahelegen, auch Negativ- und Randfälle, nicht nur den Erfolgsfall.',
         'Erfinde keine Vorbedingungen, Systeme oder Daten, die nicht durch den Ticket-Inhalt gestützt sind.',
         'Wenn ein Akzeptanzkriterium keinen sinnvollen Testfall zulässt, lasse es aus, statt einen unbegründeten Testfall zu erfinden.',

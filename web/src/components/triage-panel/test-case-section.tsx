@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
   Check,
   ClipboardList,
+  ClipboardX,
   Copy,
   Download,
   FileText,
+  GitBranch,
   Loader2,
+  Plus,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -15,8 +18,16 @@ import {
 import { useTestCaseGeneration } from './use-test-case-generation';
 import { TestCaseConfigForm } from './test-case-config-form';
 import { TestCaseStepsForm } from './test-case-steps-form';
+import { EditableText } from './editable-text';
 import { FixFlow } from './fix-flow';
-import { mapFindingToIssue, type AnalysisFinding, type AnalysisResult, type TestCase } from './triage-domain';
+import {
+  mapFindingToIssue,
+  TEST_CASE_TYPE_BADGE,
+  type AnalysisFinding,
+  type AnalysisResult,
+  type TestCase,
+  type TestCaseStep,
+} from './triage-domain';
 
 type ConfigTab = 'newTestCases' | 'addSteps';
 
@@ -30,6 +41,14 @@ type TestCaseSectionProps = {
   /** Löst eine erneute Analyse aus, nachdem AK ergänzt wurden (öffnet das Gate). */
   onAcceptanceCriteriaApplied?: () => void | Promise<void>;
 };
+
+// ING Corporate Orange – primäre Aktionen im Testfall-Bereich.
+const PRIMARY_BUTTON =
+  'flex items-center gap-1.5 h-[34px] px-3 text-xs rounded-[8px] transition-colors bg-[#FF6200] hover:bg-[#E55800] text-white disabled:opacity-40 disabled:cursor-not-allowed';
+
+function FieldLabel({ children }: { children: ReactNode }) {
+  return <div className="text-[10px] font-semibold text-gray-500 tracking-wide uppercase mb-1">{children}</div>;
+}
 
 function formatTestCasesAsText(testCases: TestCase[]): string {
   return testCases
@@ -47,6 +66,17 @@ function formatTestCasesAsText(testCases: TestCase[]): string {
       return lines.join('\n');
     })
     .join('\n\n');
+}
+
+// Zweite Verteidigungslinie gegen sinnlose Schreibvorgänge (der Hook blockt schon
+// eine leere Auswahl): ein Testfall ohne Titel oder ohne einen einzigen Step mit
+// Inhalt (z. B. weil der Nutzer alle Steps gelöscht hat) wird beim Anlegen/Anhängen
+// übersprungen statt als leerer Test Case in Azure DevOps zu landen.
+function isSaveableTestCase(testCase: TestCase): boolean {
+  return (
+    testCase.title.trim().length > 0 &&
+    testCase.steps.some(step => step.action.trim().length > 0 || step.expected.trim().length > 0)
+  );
 }
 
 function downloadTextFile(filename: string, content: string) {
@@ -96,19 +126,79 @@ export function TestCaseSection({
   const [copied, setCopied] = useState(false);
   const [acFixOpen, setAcFixOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ConfigTab>('newTestCases');
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const previousStateRef = useRef(state);
 
   const isBusy =
     state === 'checking' || state === 'generating' || state === 'creating' || state === 'attaching';
   const flowActive = state !== 'idle' && state !== 'ready';
 
+  // Nach einer frischen Generierung sind standardmäßig alle Testfälle ausgewählt.
+  // Reine Bearbeitungen (Titel/Steps) lösen keine Neuauswahl aus, da testCases dann
+  // zwar eine neue Array-Referenz hat, der Zustand aber weiterhin 'ready' bleibt.
+  useEffect(() => {
+    if (state === 'ready' && previousStateRef.current === 'generating') {
+      setSelectedIndices(new Set(testCases.map((_, index) => index)));
+    }
+    previousStateRef.current = state;
+  }, [state, testCases]);
+
+  const selectedTestCases = testCases.filter((_, index) => selectedIndices.has(index));
+  const saveableSelected = selectedTestCases.filter(isSaveableTestCase);
+  const skippedCount = selectedTestCases.length - saveableSelected.length;
+  const allSelected = testCases.length > 0 && selectedIndices.size === testCases.length;
+
+  const toggleSelected = (index: number) => {
+    setSelectedIndices(current => {
+      const next = new Set(current);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIndices(allSelected ? new Set() : new Set(testCases.map((_, index) => index)));
+  };
+
+  const handleRemove = (index: number) => {
+    removeTestCase(index);
+    setSelectedIndices(current => {
+      const next = new Set<number>();
+      current.forEach(selectedIndex => {
+        if (selectedIndex < index) next.add(selectedIndex);
+        else if (selectedIndex > index) next.add(selectedIndex - 1);
+      });
+      return next;
+    });
+  };
+
+  const updateStep = (caseIndex: number, stepIndex: number, patch: Partial<TestCaseStep>) => {
+    const steps = testCases[caseIndex].steps.map((step, i) => (i === stepIndex ? { ...step, ...patch } : step));
+    updateTestCase(caseIndex, { steps });
+  };
+
+  const removeStep = (caseIndex: number, stepIndex: number) => {
+    const steps = testCases[caseIndex].steps.filter((_, i) => i !== stepIndex);
+    updateTestCase(caseIndex, { steps });
+  };
+
+  const addStep = (caseIndex: number) => {
+    const steps = [...testCases[caseIndex].steps, { action: '', expected: '' }];
+    updateTestCase(caseIndex, { steps });
+  };
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(formatTestCasesAsText(testCases));
+    await navigator.clipboard.writeText(formatTestCasesAsText(selectedTestCases));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
-    downloadTextFile(`testfaelle-${issueKey ?? 'story'}.txt`, formatTestCasesAsText(testCases));
+    downloadTextFile(`testfaelle-${issueKey ?? 'story'}.txt`, formatTestCasesAsText(selectedTestCases));
   };
 
   const handleAcApplied = async () => {
@@ -130,7 +220,7 @@ export function TestCaseSection({
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
         <ClipboardList size={13} className="text-gray-500 shrink-0" />
         <span className="text-xs font-medium text-gray-700 tracking-wide uppercase">Testfälle</span>
@@ -140,7 +230,7 @@ export function TestCaseSection({
         <button
           onClick={handleStartFlow}
           disabled={isBusy || flowActive || !issueKey}
-          className="ml-auto flex items-center gap-1.5 px-2.5 py-1 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors disabled:opacity-60"
+          className={`ml-auto ${PRIMARY_BUTTON}`}
         >
           {state === 'generating' || state === 'checking' ? (
             <Loader2 size={11} className="animate-spin" />
@@ -214,25 +304,29 @@ export function TestCaseSection({
       {(state === 'configuring' || state === 'generating') && (
         <div>
           {hasExisting && (
-            <div className="flex gap-1 px-4 pt-3">
-              <button
-                onClick={() => setActiveTab('newTestCases')}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  activeTab === 'newTestCases'
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Neue Testfälle
-              </button>
-              <button
-                onClick={() => setActiveTab('addSteps')}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  activeTab === 'addSteps' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Steps ergänzen
-              </button>
+            <div className="px-4 pt-3">
+              <div className="inline-flex items-center gap-1 p-0.5 bg-gray-100 rounded-[8px]">
+                <button
+                  onClick={() => setActiveTab('newTestCases')}
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors ${
+                    activeTab === 'newTestCases'
+                      ? 'bg-white text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Neue Testfälle
+                </button>
+                <button
+                  onClick={() => setActiveTab('addSteps')}
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors ${
+                    activeTab === 'addSteps'
+                      ? 'bg-white text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Steps ergänzen
+                </button>
+              </div>
             </div>
           )}
 
@@ -257,74 +351,197 @@ export function TestCaseSection({
         </div>
       )}
 
+      {state === 'ready' && testCases.length === 0 && (
+        <div className="p-6 flex flex-col items-center text-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <ClipboardX size={18} className="text-gray-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">Keine Testfälle mehr</p>
+            <p className="text-xs text-gray-500 mt-1 max-w-[320px]">
+              Es sind aktuell keine generierten Testfälle vorhanden. Generiere neue Fälle, um
+              fortzufahren.
+            </p>
+          </div>
+          <button onClick={handleStartFlow} disabled={!issueKey} className={PRIMARY_BUTTON}>
+            <Sparkles size={12} />
+            Neu generieren
+          </button>
+        </div>
+      )}
+
       {testCases.length > 0 && state !== 'configuring' && state !== 'generating' && (
-        <div className="divide-y divide-gray-100">
-          {testCases.map((testCase, index) => (
-            <div key={`${testCase.title}-${index}`} className="px-4 py-3 space-y-2">
-              <div className="flex items-start gap-2">
-                <input
-                  value={testCase.title}
-                  onChange={event => updateTestCase(index, { title: event.target.value })}
-                  className="flex-1 px-2 py-1.5 border border-gray-200 rounded-[6px] text-sm font-medium text-gray-800 outline-none focus:border-blue-400 transition-colors"
-                />
-                <button
-                  onClick={() => removeTestCase(index)}
-                  className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-600 transition-colors shrink-0"
-                  title="Testfall entfernen"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-
-              <textarea
-                value={testCase.preconditions}
-                onChange={event => updateTestCase(index, { preconditions: event.target.value })}
-                placeholder="Vorbedingung"
-                rows={1}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-[6px] text-xs text-gray-600 outline-none resize-none focus:border-blue-400 transition-colors"
+        <div className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                className="h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] cursor-pointer"
               />
+              <span className="text-xs text-gray-600">
+                <span className="font-medium text-gray-900 tabular-nums">{selectedIndices.size}</span>{' '}
+                von <span className="tabular-nums">{testCases.length}</span> ausgewählt
+              </span>
+            </label>
+          </div>
 
-              <ul className="space-y-1">
-                {testCase.steps.map((step, stepIndex) => (
-                  <li key={stepIndex} className="text-xs text-gray-600 px-2 py-1 bg-gray-50 rounded-[4px]">
-                    {stepIndex + 1}. {step.action} → <span className="text-gray-500">{step.expected}</span>
-                  </li>
-                ))}
-              </ul>
+          {testCases.map((testCase, index) => {
+            const badge = testCase.type ? TEST_CASE_TYPE_BADGE[testCase.type] : null;
+            return (
+              <div
+                key={`${testCase.title}-${index}`}
+                className="border border-gray-200 rounded-[10px] overflow-hidden bg-white transition-colors hover:border-gray-300"
+              >
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-gray-50 border-b border-gray-100">
+                  <input
+                    type="checkbox"
+                    checked={selectedIndices.has(index)}
+                    onChange={() => toggleSelected(index)}
+                    className="h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] cursor-pointer shrink-0"
+                    title="Für Übernahme auswählen"
+                  />
+                  <span className="inline-flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[6px] bg-white border border-gray-200 text-[11px] font-semibold text-gray-600 tabular-nums">
+                    {index + 1}
+                  </span>
+                  {badge && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium ${badge.badgeClass}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${badge.dotClass}`} />
+                      {badge.label}
+                    </span>
+                  )}
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => handleRemove(index)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors"
+                    title="Testfall entfernen"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
 
-              {testCase.derivedFrom && (
-                <div className="text-[11px] text-gray-400">Abgeleitet aus: {testCase.derivedFrom}</div>
-              )}
+                <div className="px-3.5 py-3.5 space-y-3">
+                  <EditableText
+                    value={testCase.title}
+                    onChange={value => updateTestCase(index, { title: value })}
+                    className="text-sm font-medium text-gray-800"
+                  />
+
+                  <div>
+                    <FieldLabel>Vorbedingung</FieldLabel>
+                    <EditableText
+                      value={testCase.preconditions}
+                      onChange={value => updateTestCase(index, { preconditions: value })}
+                      className="text-gray-600"
+                      placeholder="Vorbedingung"
+                    />
+                  </div>
+
+                  <div>
+                    <FieldLabel>
+                      Testschritte{' '}
+                      <span className="text-gray-400 normal-case font-normal">({testCase.steps.length})</span>
+                    </FieldLabel>
+                    {testCase.steps.length === 0 && (
+                      <p className="text-xs text-gray-400 mb-2">Keine Schritte mehr vorhanden.</p>
+                    )}
+                    <ol className="space-y-2">
+                      {testCase.steps.map((step, stepIndex) => (
+                        <li key={stepIndex} className="flex items-start gap-2">
+                          <span className="shrink-0 mt-0.5 inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-100 text-[10px] font-semibold text-gray-600 tabular-nums">
+                            {stepIndex + 1}
+                          </span>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <EditableText
+                              value={step.action}
+                              onChange={value => updateStep(index, stepIndex, { action: value })}
+                              className="text-gray-800"
+                              placeholder="Aktion beschreiben…"
+                            />
+                            <div className="border-l-2 border-gray-200 pl-2">
+                              <div className="text-[10px] font-semibold text-gray-400 tracking-wide uppercase mb-0.5">
+                                Erwartetes Ergebnis
+                              </div>
+                              <EditableText
+                                value={step.expected}
+                                onChange={value => updateStep(index, stepIndex, { expected: value })}
+                                className="text-gray-600"
+                                placeholder="Erwartetes Ergebnis beschreiben…"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeStep(index, stepIndex)}
+                            className="p-1 h-fit text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors shrink-0"
+                            title="Schritt entfernen"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                    <button
+                      onClick={() => addStep(index)}
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-gray-300 rounded-[8px] text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <Plus size={12} />
+                      Schritt hinzufügen
+                    </button>
+                  </div>
+
+                  {testCase.derivedFrom && (
+                    <div className="flex items-start gap-1.5 pt-2 border-t border-gray-100">
+                      <GitBranch size={11} className="text-gray-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-gray-400">Abgeleitet aus: {testCase.derivedFrom}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {skippedCount > 0 && (
+            <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] p-2.5">
+              <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+              <span>
+                {skippedCount} ausgewählte{skippedCount === 1 ? 'r Testfall wird' : ' Testfälle werden'} ohne
+                Titel oder Schritte beim Anlegen/Anhängen übersprungen.
+              </span>
             </div>
-          ))}
+          )}
 
-          <div className="px-4 py-3 flex flex-wrap gap-2">
+          <div className="pt-1 flex flex-wrap gap-2">
             <button
-              onClick={() => void createWorkItems(testCases)}
-              disabled={isBusy}
-              className="flex items-center gap-1.5 h-[34px] px-3 bg-gray-900 text-white text-xs rounded-[8px] hover:bg-gray-800 transition-colors disabled:opacity-60"
+              onClick={() => void createWorkItems(saveableSelected)}
+              disabled={isBusy || saveableSelected.length === 0}
+              className={PRIMARY_BUTTON}
             >
               {state === 'creating' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-              Als Test Case anlegen
+              Als Test Case anlegen{saveableSelected.length > 0 ? ` (${saveableSelected.length})` : ''}
             </button>
             <button
               onClick={() => void handleCopy()}
-              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors"
+              disabled={selectedTestCases.length === 0}
+              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
               {copied ? 'Kopiert' : 'Kopieren'}
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors"
+              disabled={selectedTestCases.length === 0}
+              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Download size={12} />
               Herunterladen
             </button>
             <button
-              onClick={() => void attachToStory(testCases)}
-              disabled={isBusy}
-              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-60"
+              onClick={() => void attachToStory(saveableSelected)}
+              disabled={isBusy || saveableSelected.length === 0}
+              className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {state === 'attaching' ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
               An Story anhängen
@@ -332,14 +549,14 @@ export function TestCaseSection({
           </div>
 
           {createSummary && (
-            <div className="px-4 pb-3 text-xs text-emerald-700">
+            <div className="text-xs text-emerald-700">
               {createSummary.succeeded} von {createSummary.requested} Test Case(s) angelegt
               {createSummary.failed > 0 ? `, ${createSummary.failed} fehlgeschlagen` : ''}.
             </div>
           )}
 
           {attachedCount != null && (
-            <div className="px-4 pb-3 text-xs text-emerald-700">
+            <div className="text-xs text-emerald-700">
               {attachedCount} Testfall/-fälle an die Story angehängt.
             </div>
           )}

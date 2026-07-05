@@ -152,6 +152,8 @@ export type TestCase = {
   steps: TestCaseStep[];
   priority: number;
   derivedFrom: string | null;
+  /** Vom Backend geliefert, sofern die KI-Antwort einen erkennbaren Typ enthielt. */
+  type?: TestCaseTypeKey | null;
 };
 
 export type GenerateTestCasesResponse = {
@@ -186,6 +188,32 @@ export const TEST_CASE_TYPE_LABELS: Record<TestCaseTypeKey, string> = {
   happyPath: 'Happy Path',
   negative: 'Negativfälle',
   edge: 'Randfälle',
+};
+
+// Badge für einen einzelnen generierten Testfall (Singular, anders als die
+// Typ-Auswahl im Konfig-Formular oben, die die Anzahl je Typ steuert).
+export type TestCaseTypeBadge = {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+};
+
+export const TEST_CASE_TYPE_BADGE: Record<TestCaseTypeKey, TestCaseTypeBadge> = {
+  happyPath: {
+    label: 'Positivfall',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    dotClass: 'bg-emerald-500',
+  },
+  negative: {
+    label: 'Negativfall',
+    badgeClass: 'bg-red-50 text-red-600 border-red-200',
+    dotClass: 'bg-red-400',
+  },
+  edge: {
+    label: 'Randfall',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+    dotClass: 'bg-blue-500',
+  },
 };
 
 export const DEFAULT_TEST_CASE_CONFIG: TestCaseGenerationConfig = {

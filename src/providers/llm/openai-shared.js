@@ -31,7 +31,7 @@ export function getTaskDefinition(task) {
     case LLM_TASKS.GENERATE_TEST_CASES:
       return {
         responseShapeDescription:
-          'Return JSON with key testCases:array. Each item must contain title:string, preconditions:string, steps:array of {action:string, expected:string}, priority:integer(1-4), derivedFrom:string.',
+          'Return JSON with key testCases:array. Each item must contain title:string, preconditions:string, steps:array of {action:string, expected:string}, priority:integer(1-4), derivedFrom:string, type:happyPath|negative|edge.',
       };
     case LLM_TASKS.GENERATE_TEST_STEPS:
       return {
@@ -230,8 +230,12 @@ export function buildStructuredOutputSchema(task) {
                 derivedFrom: {
                   type: 'string',
                 },
+                type: {
+                  type: 'string',
+                  enum: ['happyPath', 'negative', 'edge'],
+                },
               },
-              required: ['title', 'preconditions', 'steps', 'priority', 'derivedFrom'],
+              required: ['title', 'preconditions', 'steps', 'priority', 'derivedFrom', 'type'],
             },
           },
         },

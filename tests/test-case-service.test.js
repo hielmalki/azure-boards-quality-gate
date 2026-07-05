@@ -110,6 +110,7 @@ test('mapTestCasesResult normalizes priority and trims fields', () => {
         steps: [{ action: 'Login ausführen', expected: 'Dashboard erscheint' }],
         priority: 99,
         derivedFrom: 'AK-1',
+        type: 'happyPath',
       },
     ]),
   });
@@ -118,6 +119,19 @@ test('mapTestCasesResult normalizes priority and trims fields', () => {
   assert.equal(mapped[0].title, 'Login mit gültigen Daten');
   assert.equal(mapped[0].priority, 2); // out-of-range priority falls back to default
   assert.equal(mapped[0].derivedFrom, 'AK-1');
+  assert.equal(mapped[0].type, 'happyPath');
+});
+
+test('mapTestCasesResult falls back to null for a missing or unknown type', () => {
+  const mapped = mapTestCasesResult({
+    llmResult: createLlmResult([
+      { title: 'Ohne Typ', steps: [{ action: 'a', expected: 'b' }], type: 'unknown-type' },
+      { title: 'Auch ohne Typ', steps: [{ action: 'a', expected: 'b' }] },
+    ]),
+  });
+
+  assert.equal(mapped[0].type, null);
+  assert.equal(mapped[1].type, null);
 });
 
 test('mapTestCasesResult returns an empty list when the LLM output has no testCases', () => {
