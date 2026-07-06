@@ -4,6 +4,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -58,6 +59,43 @@ function FieldLabel({ children }: { children: ReactNode }) {
   return <div className="text-[10px] font-semibold text-gray-500 tracking-wide uppercase mb-1">{children}</div>;
 }
 
+// Inline-Bestätigung nach dem Anlegen/Anhängen. Ersetzt die frühere Mini-Textzeile
+// durch ein klar erkennbares Panel – dieselbe Bausprache wie die Amber-/Error-Notices
+// weiter unten (gleiche Radien, Abstände, Icongrößen), damit es sich nahtlos einfügt.
+function ResultNotice({
+  tone,
+  title,
+  detail,
+}: {
+  tone: 'success' | 'warning';
+  title: ReactNode;
+  detail?: ReactNode;
+}) {
+  const isSuccess = tone === 'success';
+  const Icon = isSuccess ? CheckCircle2 : AlertTriangle;
+  const container = isSuccess
+    ? 'bg-emerald-50 border-emerald-200'
+    : 'bg-amber-50 border-amber-200';
+  const iconColor = isSuccess ? 'text-emerald-600' : 'text-amber-600';
+  const titleColor = isSuccess ? 'text-emerald-800' : 'text-amber-800';
+  const detailColor = isSuccess ? 'text-emerald-700' : 'text-amber-700';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className={`flex items-start gap-2 border rounded-[10px] p-3 ${container}`}
+    >
+      <Icon size={16} className={`mt-0.5 shrink-0 ${iconColor}`} />
+      <div>
+        <div className={`text-sm font-medium ${titleColor}`}>{title}</div>
+        {detail && <div className={`text-xs mt-0.5 ${detailColor}`}>{detail}</div>}
+      </div>
+    </motion.div>
+  );
+}
+
 function formatTestCasesAsText(testCases: TestCase[]): string {
   return testCases
     .map((testCase, index) => {
@@ -101,6 +139,8 @@ type TestCaseResultCardProps = {
   index: number;
   testCase: TestCase;
   selected: boolean;
+  /** Read-only nach erfolgreichem Anlegen – schützt vor versehentlichen Duplikaten. */
+  disabled?: boolean;
   onToggleSelect: () => void;
   onRemove: () => void;
   onUpdateTitle: (value: string) => void;
@@ -121,6 +161,7 @@ function TestCaseResultCard({
   index,
   testCase,
   selected,
+  disabled = false,
   onToggleSelect,
   onRemove,
   onUpdateTitle,
@@ -143,7 +184,8 @@ function TestCaseResultCard({
           checked={selected}
           onChange={onToggleSelect}
           onClick={event => event.stopPropagation()}
-          className="h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] cursor-pointer shrink-0"
+          disabled={disabled}
+          className={`h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] shrink-0 ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
           title="Für Übernahme auswählen"
         />
         <span className="inline-flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[6px] bg-white border border-gray-200 text-[11px] font-semibold text-gray-600 tabular-nums shrink-0">
@@ -158,18 +200,25 @@ function TestCaseResultCard({
           </span>
         )}
         <div className="flex-1 min-w-0" onClick={event => event.stopPropagation()}>
-          <EditableText value={testCase.title} onChange={onUpdateTitle} className="text-sm font-medium text-gray-800" />
+          <EditableText
+            value={testCase.title}
+            onChange={onUpdateTitle}
+            disabled={disabled}
+            className="text-sm font-medium text-gray-800"
+          />
         </div>
-        <button
-          onClick={event => {
-            event.stopPropagation();
-            onRemove();
-          }}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors shrink-0"
-          title="Testfall entfernen"
-        >
-          <Trash2 size={13} />
-        </button>
+        {!disabled && (
+          <button
+            onClick={event => {
+              event.stopPropagation();
+              onRemove();
+            }}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors shrink-0"
+            title="Testfall entfernen"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
         {expanded ? (
           <ChevronDown size={16} className="text-gray-400 shrink-0" />
         ) : (
@@ -191,6 +240,7 @@ function TestCaseResultCard({
                 <EditableText
                   value={testCase.preconditions}
                   onChange={onUpdatePreconditions}
+                  disabled={disabled}
                   className="text-gray-600"
                   placeholder="Vorbedingung"
                 />
@@ -214,6 +264,7 @@ function TestCaseResultCard({
                         <EditableText
                           value={step.action}
                           onChange={value => onUpdateStep(stepIndex, { action: value })}
+                          disabled={disabled}
                           className="text-gray-800"
                           placeholder="Aktion beschreiben…"
                         />
@@ -224,28 +275,33 @@ function TestCaseResultCard({
                           <EditableText
                             value={step.expected}
                             onChange={value => onUpdateStep(stepIndex, { expected: value })}
+                            disabled={disabled}
                             className="text-gray-600"
                             placeholder="Erwartetes Ergebnis beschreiben…"
                           />
                         </div>
                       </div>
-                      <button
-                        onClick={() => onRemoveStep(stepIndex)}
-                        className="p-1 h-fit text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors shrink-0"
-                        title="Schritt entfernen"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {!disabled && (
+                        <button
+                          onClick={() => onRemoveStep(stepIndex)}
+                          className="p-1 h-fit text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-[6px] transition-colors shrink-0"
+                          title="Schritt entfernen"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ol>
-                <button
-                  onClick={onAddStep}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-gray-300 rounded-[8px] text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Plus size={12} />
-                  Schritt hinzufügen
-                </button>
+                {!disabled && (
+                  <button
+                    onClick={onAddStep}
+                    className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-gray-300 rounded-[8px] text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <Plus size={12} />
+                    Schritt hinzufügen
+                  </button>
+                )}
               </div>
 
               {testCase.derivedFrom && (
@@ -291,6 +347,7 @@ export function TestCaseSection({
     removeTestCase,
     createWorkItems,
     attachToStory,
+    reset,
   } = useTestCaseGeneration({
     issueKey,
     acceptanceCriteriaMissing: Boolean(acceptanceCriteriaFinding),
@@ -305,6 +362,11 @@ export function TestCaseSection({
   const isBusy =
     state === 'checking' || state === 'generating' || state === 'creating' || state === 'attaching';
   const flowActive = state !== 'idle' && state !== 'ready';
+  // Sobald mindestens ein Test Case erfolgreich angelegt wurde, sperren wir den
+  // Bereich (Schutz vor versehentlichen Duplikaten in Azure Boards). Bei komplettem
+  // Fehlschlag (succeeded === 0) bleibt der Bereich editierbar, damit der Nutzer es
+  // erneut versuchen kann.
+  const created = createSummary != null && createSummary.succeeded > 0;
 
   // Nach einer frischen Generierung sind standardmäßig alle Testfälle ausgewählt.
   // Reine Bearbeitungen (Titel/Steps) lösen keine Neuauswahl aus, da testCases dann
@@ -387,6 +449,13 @@ export function TestCaseSection({
     void startFlow();
   };
 
+  const handleFinish = () => {
+    setSelectedIndices(new Set());
+    setCopied(false);
+    setActiveTab('newTestCases');
+    reset();
+  };
+
   const handleCancelConfig = () => {
     setActiveTab('newTestCases');
     cancel();
@@ -401,16 +470,18 @@ export function TestCaseSection({
           <span className="text-xs text-gray-400">{testCases.length} generiert</span>
         )}
         <button
-          onClick={handleStartFlow}
-          disabled={isBusy || flowActive || !issueKey}
+          onClick={created ? handleFinish : handleStartFlow}
+          disabled={created ? !issueKey : isBusy || flowActive || !issueKey}
           className={`ml-auto ${HEADER_BUTTON}`}
         >
-          {state === 'generating' || state === 'checking' ? (
+          {created ? (
+            <Check size={11} />
+          ) : state === 'generating' || state === 'checking' ? (
             <Loader2 size={11} className="animate-spin" />
           ) : (
             <Sparkles size={11} />
           )}
-          {testCases.length > 0 ? 'Neu generieren' : 'Testfälle generieren'}
+          {created ? 'Fertig' : testCases.length > 0 ? 'Neu generieren' : 'Testfälle generieren'}
         </button>
       </div>
 
@@ -546,12 +617,13 @@ export function TestCaseSection({
       {testCases.length > 0 && state !== 'configuring' && state !== 'generating' && (
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            <label className={`flex items-center gap-2 select-none ${created ? 'cursor-default' : 'cursor-pointer'}`}>
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleSelectAll}
-                className="h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] cursor-pointer"
+                disabled={created}
+                className={`h-3.5 w-3.5 rounded border-gray-300 accent-[#FF6200] ${created ? 'cursor-default' : 'cursor-pointer'}`}
               />
               <span className="text-xs text-gray-600">
                 <span className="font-medium text-gray-900 tabular-nums">{selectedIndices.size}</span>{' '}
@@ -566,6 +638,7 @@ export function TestCaseSection({
               index={index}
               testCase={testCase}
               selected={selectedIndices.has(index)}
+              disabled={created}
               onToggleSelect={() => toggleSelected(index)}
               onRemove={() => handleRemove(index)}
               onUpdateTitle={value => updateTestCase(index, { title: value })}
@@ -589,7 +662,7 @@ export function TestCaseSection({
           <div className="pt-1 flex flex-wrap gap-2">
             <button
               onClick={() => void createWorkItems(saveableSelected)}
-              disabled={isBusy || saveableSelected.length === 0}
+              disabled={isBusy || saveableSelected.length === 0 || created}
               className={PRIMARY_BUTTON}
             >
               {state === 'creating' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
@@ -613,7 +686,7 @@ export function TestCaseSection({
             </button>
             <button
               onClick={() => void attachToStory(saveableSelected)}
-              disabled={isBusy || saveableSelected.length === 0}
+              disabled={isBusy || saveableSelected.length === 0 || created}
               className="flex items-center gap-1.5 h-[34px] px-3 text-xs text-gray-600 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {state === 'attaching' ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
@@ -621,18 +694,51 @@ export function TestCaseSection({
             </button>
           </div>
 
-          {createSummary && (
-            <div className="text-xs text-emerald-700">
-              {createSummary.succeeded} von {createSummary.requested} Test Case(s) angelegt
-              {createSummary.failed > 0 ? `, ${createSummary.failed} fehlgeschlagen` : ''}.
-            </div>
-          )}
+          <AnimatePresence>
+            {createSummary && (
+              createSummary.failed > 0 ? (
+                <ResultNotice
+                  key="create-summary"
+                  tone="warning"
+                  title={
+                    <>
+                      <span className="tabular-nums">{createSummary.succeeded}</span> von{' '}
+                      <span className="tabular-nums">{createSummary.requested}</span> Test Case(s) angelegt
+                    </>
+                  }
+                  detail={
+                    <>
+                      <span className="tabular-nums">{createSummary.failed}</span> fehlgeschlagen – bitte die betroffenen
+                      Testfälle prüfen und erneut anlegen.
+                    </>
+                  }
+                />
+              ) : (
+                <ResultNotice
+                  key="create-summary"
+                  tone="success"
+                  title={
+                    <>
+                      <span className="tabular-nums">{createSummary.succeeded}</span> Test Case(s) in Azure Boards angelegt
+                    </>
+                  }
+                  detail="Die Testfälle stehen jetzt im Backlog bereit."
+                />
+              )
+            )}
 
-          {attachedCount != null && (
-            <div className="text-xs text-emerald-700">
-              {attachedCount} Testfall/-fälle an die Story angehängt.
-            </div>
-          )}
+            {attachedCount != null && (
+              <ResultNotice
+                key="attached-count"
+                tone="success"
+                title={
+                  <>
+                    <span className="tabular-nums">{attachedCount}</span> Testfall/-fälle an die Story angehängt
+                  </>
+                }
+              />
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
