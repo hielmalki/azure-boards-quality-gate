@@ -18,3 +18,7 @@ Thumbs.db
 
 # Azure Functions Core Tools lokale Einstellungen (enthält Secrets)
 local.settings.json
+
+# Lokale KI-Agenten-Anweisungen, nicht Teil des öffentlichen Repos
+CLAUDE.md
+AGENTS.md
