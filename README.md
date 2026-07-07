@@ -14,8 +14,56 @@ Forge-Plugin auf Azure DevOps portiert: kein Forge-Resolver, kein `@forge/bridge
 `manifest.yml` mehr — stattdessen Azure-Functions-HTTP-Endpunkte, das ADO-Extension-SDK und
 `vss-extension.json`.
 
+## Problem
+
+Work Items in Azure Boards werden oft mit unklaren oder unvollständigen Anforderungen angelegt:
+Akzeptanzkriterien fehlen, Beschreibungen sind mehrdeutig, ähnliche Anforderungen werden doppelt
+erfasst, und zu jeder Story müssen von Hand passende Testfälle nachgezogen werden. Das fällt meist
+erst spät auf — im Review, in der Entwicklung oder im Test — und kostet dann mehr Zeit als eine
+Prüfung direkt beim Anlegen des Work Items.
+
+QualityGate AI setzt genau dort an: ein zusätzlicher Tab direkt im Work-Item-Formular, der
+Beschreibung und Akzeptanzkriterien KI-gestützt gegen ein konfigurierbares Regelset prüft,
+konkrete Fix-Vorschläge macht, mögliche Duplikate im Projekt findet und aus den
+Akzeptanzkriterien passende Testfälle generiert — inklusive direkter Übernahme als
+Azure-Test-Case-Work-Items. Kein Kontextwechsel in ein separates Tool, keine manuelle Checkliste.
+
+## Architektur
+
+Client (ADO-Extension-iframe) → Azure Functions Backend → Azure DevOps / LLM-Provider / Storage.
+
+📐 [`docs/architektur.drawio`](docs/architektur.drawio) — GitHub rendert die Datei beim Öffnen
+direkt im Browser als Diagramm (kein externes Tool nötig; zum Bearbeiten mit
+[diagrams.net](https://app.diagrams.net) öffnen). Zeigt die Backend-Schichten (Functions, Auth,
+Services, Domain, LLM-Provider, Gateway, Repositories) und ihre externen Abhängigkeiten (Azure
+DevOps REST API, OpenAI/Azure OpenAI, Azure Table Storage, Azure Key Vault).
+
+Hintergrund und Migrations-Entscheidungen stehen in
+[`docs/azure-boards-migration-architektur.md`](docs/azure-boards-migration-architektur.md).
+
+## Installation (für Nutzer:innen einer Azure-DevOps-Organisation)
+
+Diese Extension ist (noch) nicht öffentlich im Visual Studio Marketplace gelistet
+(`"public": false` in `vss-extension.json`) und braucht ein eigenes Backend — es gibt keinen
+zentral gehosteten Dienst, den beliebige Organisationen einfach abonnieren können. Um sie in einer
+eigenen Organisation zu nutzen:
+
+1. **Backend deployen** — eigene Azure-Function-App + Storage (+ optional Key Vault) anlegen und
+   diesen Code deployen (siehe [Setup](#setup) unten für Umgebungsvariablen und Deploy-Befehl).
+2. **Extension bauen** — `VITE_API_BASE_URL` auf die eigene Backend-URL setzen, dann
+   `cd web && npm install && npm run package` (siehe
+   [Frontend und Extension-Paketierung](#frontend-web-und-extension-paketierung)). Ergebnis: eine
+   `.vsix`-Datei in `vsix-output/`.
+3. **In der ADO-Organisation hochladen** — als Organisation-Owner unter
+   *Organization Settings → Extensions → Manage extensions → Upload extension* die `.vsix` hochladen
+   und installieren, oder `tfx extension publish --share-with <org>` gegen die eigene Organisation
+   ausführen (Marketplace-Publisher-Konto vorausgesetzt).
+4. **Work Item öffnen** — der neue Tab „QualityGate AI" erscheint im Work-Item-Formular.
+
 ## Quelle der Wahrheit
 
+- [`docs/architektur.drawio`](docs/architektur.drawio) — Architektur-Diagramm (Client, Backend-
+  Schichten, externe Abhängigkeiten), siehe [Architektur](#architektur) oben.
 - [`docs/azure-boards-migration-architektur.md`](docs/azure-boards-migration-architektur.md) —
   Zielarchitektur, Schicht-für-Schicht-Analyse, empfohlene Umsetzungsreihenfolge (7 Schritte).
 - [`docs/azure-boards-migration-umsetzung.md`](docs/azure-boards-migration-umsetzung.md) —
