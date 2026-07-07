@@ -1,11 +1,17 @@
 # Azure Boards Quality Gate
 
-Backend-Code für die Azure-DevOps/Azure-Boards-Version von QualityGate AI.
+Azure-DevOps-Extension, die Work Items in Azure Boards direkt im Formular auf Anforderungsqualität
+prüft: KI-gestützte Analyse von Beschreibung/Akzeptanzkriterien, Fix-Vorschläge, Duplikaterkennung
+und automatisierte Testfall-Generierung. Backend als Azure Functions (Node.js), Frontend als
+React/Vite-App über das ADO-Extension-SDK.
 
-Dieses Repository ist aus dem ursprünglichen Jira-Forge-Plugin ([`jiraPlugin`](../jiraPlugin))
-herausgelöst. Backend (`src/`) und Frontend (`web/`, aus `jiraPlugin/static/hello-world`
-übernommen) sind vollständig auf Azure DevOps umgestellt: kein Forge-Resolver, kein `@forge/bridge`,
-kein `manifest.yml` mehr — stattdessen Azure-Functions-HTTP-Endpunkte, das ADO-Extension-SDK und
+> **Status:** persönliches Projekt / Portfolio-Arbeit, kein offizielles Microsoft-Produkt und ohne
+> Gewähr. Siehe [„Stand der Migration"](#stand-der-migration) für den aktuellen
+> Implementierungsstand der einzelnen Schichten.
+
+Backend (`src/`) und Frontend (`web/`) wurden aus einem ursprünglich für Jira gebauten
+Forge-Plugin auf Azure DevOps portiert: kein Forge-Resolver, kein `@forge/bridge`, kein
+`manifest.yml` mehr — stattdessen Azure-Functions-HTTP-Endpunkte, das ADO-Extension-SDK und
 `vss-extension.json`.
 
 ## Quelle der Wahrheit
@@ -59,11 +65,10 @@ Lokal kann ein PAT als Bearer-Wert eingesetzt werden; in der Extension liefert
 Endpunkt-Liste steht in
 `src/functions/{work-items,analysis,fix-suggestions,rulesets,api-key,user-state,llm}.js`.
 
-Deploy auf die bestehende Function App (`qualitygate-ai-api`, Resource Group
-`qualitygate-ai-rg`):
+Deploy auf eine bestehende Function App:
 
 ```bash
-func azure functionapp publish qualitygate-ai-api
+func azure functionapp publish <function-app-name>
 ```
 
 ### Umgebungsvariablen (für das Azure-DevOps-Gateway)
@@ -102,7 +107,7 @@ nötig — siehe [`docs/testfall-generierung.md`](docs/testfall-generierung.md#w
 
 | Variable | Zweck |
 | --- | --- |
-| `AZURE_KEY_VAULT_URL` | z. B. `https://qualitygate-ai-kv.vault.azure.net`. Gesetzt → `app-config-repository.js` liest/schreibt den OpenAI-Key über `src/repositories/key-vault-store.js` (Key Vault) statt über Azure Table Storage. Ungesetzt → bisheriger Table-Storage-Pfad (lokaler Fallback). |
+| `AZURE_KEY_VAULT_URL` | z. B. `https://<key-vault-name>.vault.azure.net`. Gesetzt → `app-config-repository.js` liest/schreibt den OpenAI-Key über `src/repositories/key-vault-store.js` (Key Vault) statt über Azure Table Storage. Ungesetzt → bisheriger Table-Storage-Pfad (lokaler Fallback). |
 | `OPENAI_SECRET_NAME` | Name des Secrets im Vault, Default `openai-api-key`. |
 
 Auth gegen Key Vault läuft über `DefaultAzureCredential` (System-assigned Managed Identity der
@@ -112,12 +117,12 @@ selbst auf den Vault zuzugreifen.
 **Einmaliges Azure-Setup (manuell, nicht Teil dieses Repos):**
 
 ```bash
-az keyvault create --name qualitygate-ai-kv --resource-group qualitygate-ai-rg --location westeurope
-az functionapp identity assign --name qualitygate-ai-api --resource-group qualitygate-ai-rg
-az keyvault set-policy --name qualitygate-ai-kv --object-id <function-app-principal-id> \
+az keyvault create --name <key-vault-name> --resource-group <resource-group> --location westeurope
+az functionapp identity assign --name <function-app-name> --resource-group <resource-group>
+az keyvault set-policy --name <key-vault-name> --object-id <function-app-principal-id> \
   --secret-permissions get set delete
-az functionapp config appsettings set --name qualitygate-ai-api --resource-group qualitygate-ai-rg \
-  --settings AZURE_KEY_VAULT_URL=https://qualitygate-ai-kv.vault.azure.net
+az functionapp config appsettings set --name <function-app-name> --resource-group <resource-group> \
+  --settings AZURE_KEY_VAULT_URL=https://<key-vault-name>.vault.azure.net
 ```
 
 Danach den OpenAI-Key einmalig über `saveOpenAiApiKey`/`POST /api/api-key` (oder
@@ -131,10 +136,10 @@ anschließend gelöscht werden.
 | `AZURE_STORAGE_CONNECTION_STRING` | Verbindungsstring des Storage Accounts. Fällt auf `AzureWebJobsStorage` zurück (in der Function App bereits gesetzt). |
 | `AZURE_TABLE_NAME` | Tabellenname, Default `qualityGateKeyValueStore`. |
 
-Die Tabelle muss einmalig existieren (wurde für `qualitygateaifr` bereits angelegt):
+Die Tabelle muss einmalig angelegt werden:
 
 ```bash
-az storage table create --name qualityGateKeyValueStore --account-name qualitygateaifr --auth-mode login
+az storage table create --name qualityGateKeyValueStore --account-name <storage-account-name> --auth-mode login
 ```
 
 ## Frontend (`web/`) und Extension-Paketierung
@@ -160,8 +165,8 @@ npm run build      # vite build -> web/build
 npm run package    # baut + tfx extension create -> ../vsix-output/*.vsix
 ```
 
-`VITE_API_BASE_URL` (Build-Env) überschreibt die Backend-URL, Default
-`https://qualitygate-ai-api.azurewebsites.net`.
+`VITE_API_BASE_URL` (Build-Env) überschreibt die Backend-URL (Default zeigt auf die
+Autor-Deployment-Instanz und ist für eigene Deployments zu ersetzen).
 
 `vss-extension.json` (Repo-Root, ersetzt `manifest.yml`) deklariert eine
 `ms.vss-work-web.work-item-form-page`-Contribution (eigener Tab im Work-Item-Formular) mit den
@@ -187,3 +192,7 @@ web/                 # React/Vite-Frontend, ADO-Extension-SDK statt @forge/bridg
 vss-extension.json   # ADO-Extension-Manifest (ersetzt manifest.yml)
 tests/
 ```
+
+## Lizenz
+
+[MIT](LICENSE)
